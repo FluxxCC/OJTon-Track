@@ -1,13 +1,11 @@
 {
+  "version": 2,
   "functions": {
     "api/server.js": {
       "runtime": "nodejs20.x"
     }
   },
   "routes": [
-    { "src": "/api/.*", "dest": "/api/server.js" },
-    { "src": "/config\.js", "dest": "/api/server.js" },
-    { "src": "/login", "dest": "/api/server.js" },
-    { "src": "/admin/login", "dest": "/api/server.js" }
+    { "src": "/api/.*", "dest": "/api/server.js" }
   ]
 }
