@@ -2,6 +2,8 @@
   "version": 2,
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
+    { "source": "/:path*/styles.css", "destination": "/styles.css" },
+    { "source": "/:path*/config.js", "destination": "/api/server" },
     { "source": "/api/:path*", "destination": "/api/server" },
     { "source": "/config.js", "destination": "/api/server" }
   ],

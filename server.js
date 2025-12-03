@@ -166,6 +166,15 @@ app.get('/config.js', (req, res) => {
   } catch { res.status(500).send(''); }
 });
 
+app.get(/^.*\/config\.js$/, (req, res) => {
+  try {
+    const url = process.env.SUPABASE_URL || '';
+    const anon = process.env.SUPABASE_ANON_KEY || '';
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send(`window.SUPABASE_URL=${JSON.stringify(url)};window.SUPABASE_ANON_KEY=${JSON.stringify(anon)};`);
+  } catch { res.status(500).send(''); }
+});
+
 // Explicit routes for PWA assets
 app.get('/manifest.json', (req, res) => {
   try { res.type('application/json'); res.sendFile(path.join(__dirname, 'manifest.json')); } catch { res.status(404).send('Not Found'); }
