@@ -4,6 +4,7 @@
     { "src": "api/server.js", "use": "@vercel/node" }
   ],
   "rewrites": [
+    { "source": "/", "destination": "/index.html" },
     { "source": "/api/:path*", "destination": "/api/server" },
     { "source": "/config.js", "destination": "/api/server" }
   ],
