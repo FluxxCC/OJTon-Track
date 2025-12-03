@@ -3,12 +3,12 @@
   "builds": [
     { "src": "api/server.js", "use": "@vercel/node" }
   ],
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/server.js" },
-    { "source": "/config.js", "destination": "/api/server.js" },
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/admin/login", "destination": "/admin/login.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/api/.*", "dest": "api/server.js" },
+    { "src": "/config\\.js", "dest": "api/server.js" },
+    { "src": "/login", "dest": "login.html" },
+    { "src": "/admin/login", "dest": "admin/login.html" },
+    { "src": "/(.*)", "dest": "index.html" }
   ],
   "headers": [
     {
