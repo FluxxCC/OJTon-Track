@@ -4,9 +4,8 @@
     { "src": "api/server.js", "use": "@vercel/node" }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/server.js" },
-    { "source": "/config.js", "destination": "/api/server.js" },
-    { "source": "/:path*", "destination": "/api/server.js" }
+    { "source": "/api/:path*", "destination": "/api/server" },
+    { "source": "/config.js", "destination": "/api/server" }
   ],
   "headers": [
     { "source": "/manifest.json", "headers": [ { "key": "Cache-Control", "value": "public, max-age=3600" } ] },
