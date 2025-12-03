@@ -185,6 +185,14 @@ app.get('/service-worker.js', (req, res) => {
 app.get('/offline.html', (req, res) => {
   try { res.type('text/html'); res.sendFile(path.join(__dirname, 'offline.html')); } catch { res.status(404).send('Not Found'); }
 });
+
+// Health endpoints for Render
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ ok: true });
+});
+app.get('/readyz', (req, res) => {
+  res.status(200).json({ ready: true });
+});
 // Alias nested paths to root styles.css to avoid relative resolution issues
 app.get(/^.*\/styles\.css$/, (req, res) => {
   try { res.type('text/css'); res.sendFile(path.join(__dirname, 'styles.css')); } catch { res.status(404).send('Not Found'); }

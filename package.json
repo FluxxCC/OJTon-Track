@@ -8,5 +8,8 @@
     "express-session": "^1.18.2",
     "mysql2": "^3.15.3",
     "serverless-http": "^3.2.0"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }
