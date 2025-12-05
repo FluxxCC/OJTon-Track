@@ -1,14 +1,9 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/:path*/styles.css", "destination": "/styles.css" },
-    { "source": "/:path*/config.js", "destination": "/api/server" },
-    { "source": "/api/:path*", "destination": "/api/server" },
-    { "source": "/config.js", "destination": "/api/server" }
-  ],
-  "headers": [
-    { "source": "/service-worker.js", "headers": [ { "key": "Cache-Control", "value": "no-cache" }, { "key": "Content-Type", "value": "application/javascript" } ] },
-    { "source": "/manifest.json", "headers": [ { "key": "Content-Type", "value": "application/manifest+json" } ] }
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
+    { "source": "/config.js", "destination": "/api/index.js" },
+    { "source": "/login", "destination": "/api/index.js" },
+    { "source": "/admin/login", "destination": "/api/index.js" }
   ]
 }
