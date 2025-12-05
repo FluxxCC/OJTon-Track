@@ -13,21 +13,19 @@
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   </head>
   <body>
     <div id="root"></div>
-    <form id="fallback-login" class="form" style="display:none; width:min(92vw,560px); margin:0 auto; text-align:center">
+    <form id="fallback-login" class="form" style="width:min(92vw,560px); margin:0 auto; text-align:center">
       <input class="input" type="text" name="id" placeholder="ID number" required autocomplete="username" />
       <input class="input" type="password" name="password" placeholder="Password" required autocomplete="current-password" />
-      <label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" name="remember" id="remember" /><span>Keep me signed in</span></label>
+      <label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" name="remember" id="remember_fallback" /><span>Keep me signed in</span></label>
       <button class="role-button" type="submit">Login</button>
       <button class="role-button" type="button" onclick="(function(){ window.location.href='index.html'; })()">Back</button>
       <p id="fallback-error" style="color:#b91c1c;font-weight:600;margin:0"></p>
     </form>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="/config.js" defer></script>
     <script>
       function getSelectedRole() {
         try {
@@ -91,7 +89,7 @@
         }
         if (!window.React || !window.ReactDOM) {
           var f = document.getElementById('fallback-login');
-          if (f) { f.style.display='block'; bindFallback(); }
+          if (f) { bindFallback(); }
         }
       })();
 
@@ -269,7 +267,7 @@
         );
       }
 
-      if (window.React && window.ReactDOM) { const root = ReactDOM.createRoot(document.getElementById('root')); root.render(React.createElement(Login)); }
+      if (window.React && window.ReactDOM) { const root = ReactDOM.createRoot(document.getElementById('root')); root.render(React.createElement(Login)); try { var f = document.getElementById('fallback-login'); if (f) f.style.display='none'; } catch {} }
       (function(){
         var rootEl = document.getElementById('root');
         var fallbackEl = document.getElementById('fallback-login');
