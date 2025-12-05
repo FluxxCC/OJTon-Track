@@ -224,6 +224,14 @@ app.get('/', (req, res) => {
   try { res.type('text/html'); res.sendFile(path.join(__dirname, 'index.html')); } catch { res.status(500).send('Server error'); }
 });
 
+// Explicit login page routes so Vercel clean URLs work
+app.get('/login', (req, res) => {
+  try { res.type('text/html'); res.sendFile(path.join(__dirname, 'login.html')); } catch { res.status(500).send('Server error'); }
+});
+app.get('/admin/login', (req, res) => {
+  try { res.type('text/html'); res.sendFile(path.join(__dirname, path.join('admin','login.html'))); } catch { res.status(500).send('Server error'); }
+});
+
 // Optional HTTPS server for mobile installability
 try {
   const enableHttps = String(process.env.HTTPS_ENABLE||'').toLowerCase() === 'true';
