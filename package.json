@@ -12,5 +12,8 @@
   },
   "scripts": {
     "start": "node server.js"
+  },
+  "overrides": {
+    "ws": "8.18.2"
   }
 }
