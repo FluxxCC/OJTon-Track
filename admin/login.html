@@ -34,7 +34,7 @@
             var u = (form.username && form.username.value || '').trim();
             var p = (form.password && form.password.value || '').trim();
             try{
-              var resp = await fetch('/admin/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ username:u, password:p }) });
+              var resp = await fetch('/api/admin/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ username:u, password:p }) });
               var data = await resp.json().catch(function(){ return { ok:false, error:'Invalid JSON' }; });
               if(resp.ok && data && data.ok){
                 try {
@@ -79,7 +79,7 @@
           const username = (form.username?.value || '').trim();
           const password = (form.password?.value || '').trim();
           try {
-            const resp = await fetch('/admin/login', {
+            const resp = await fetch('/api/admin/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ username, password })

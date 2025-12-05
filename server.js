@@ -481,8 +481,90 @@ app.post('/admin/login', (req, res) => {
   }
 });
 
+app.post('/api/admin/login', (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    const dataPath = path.join(__dirname, 'data', 'admin.json');
+    fs.readFile(dataPath, 'utf8', (err, json) => {
+      if (err) return res.status(500).json({ ok: false, error: 'Server error' });
+      try {
+        const admin = JSON.parse(json);
+        const ok = admin.username === username && admin.password === password;
+        if (!ok) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+        req.session.user = { idNumber: admin.username, role: 'super_admin', courseId: null, courseCode: null };
+        try {
+          const crypto = require('crypto');
+          const secret = process.env.SESSION_SECRET || 'ojtontrack-dev-secret';
+          const payload = Buffer.from(JSON.stringify({ idNumber: admin.username, role: 'super_admin', courseId: null, courseCode: null }), 'utf8').toString('base64url');
+          const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+          const token = `${payload}.${sig}`;
+          return res.json({ ok: true, redirect: '/admin/dashboard.html', token, role: 'super_admin' });
+        } catch {
+          return res.json({ ok: true, redirect: '/admin/dashboard.html' });
+        }
+      } catch (e) {
+        return res.status(500).json({ ok: false, error: 'Invalid admin data format' });
+      }
+    });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: 'Invalid request body' });
+  }
+});
+
 // General user login (uses DB if configured, otherwise JSON fallback)
 app.post('/login', async (req, res) => {
+  const { idNumber, password } = req.body || {};
+  if (!idNumber || !password) return res.status(400).json({ ok: false, error: 'Missing credentials' });
+
+  try {
+    if (pool && !supabase) {
+      const [rows] = await pool.execute(
+        'SELECT u.id, u.id_number, u.password_hash, u.role, u.course_id, c.code AS course_code FROM users u LEFT JOIN courses c ON c.id = u.course_id WHERE u.id_number=?',
+        [idNumber]
+      );
+      const user = rows[0];
+      if (!user) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      const bcrypt = require('bcrypt');
+      const ok = await bcrypt.compare(password, user.password_hash);
+      if (!ok) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      req.session.user = { id: user.id, idNumber: user.id_number, role: user.role, courseId: user.course_id, courseCode: user.course_code };
+    } else if (supabase) {
+      const { data } = await supabase.from('users').select('idnumber,password,role,course').eq('idnumber', idNumber).limit(1);
+      const u = Array.isArray(data) && data[0] ? data[0] : null;
+      if (!u) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      if ((u.password || '') !== password) return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+      const role = String(u.role||'').toLowerCase();
+      const primaryCourse = String(u.course||'').trim() || null;
+      const courseCode = role === 'instructor' ? null : primaryCourse;
+      req.session.user = { idNumber: u.idnumber, role: u.role, courseId: null, courseCode };
+    } else {
+      return res.status(500).json({ ok: false, error: 'Supabase not configured' });
+    }
+
+    const u = req.session && req.session.user ? req.session.user : null;
+    let redirect = '/';
+    if (u.role === 'coordinator') redirect = `/coordinator/dashboard.html`;
+    else if (u.role === 'instructor') redirect = `/instructor/dashboard.html`;
+    else if (u.role === 'supervisor') redirect = `/supervisor/dashboard.html`;
+    else if (u.role === 'student') redirect = `/student/dashboard.html`;
+    else redirect = '/admin/dashboard.html';
+    try {
+      const crypto = require('crypto');
+      const secret = process.env.SESSION_SECRET || 'ojtontrack-dev-secret';
+      const payload = Buffer.from(JSON.stringify({ idNumber: u.idNumber, role: u.role, courseId: u.courseId || null, courseCode: u.courseCode || null }), 'utf8').toString('base64url');
+      const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+      const token = `${payload}.${sig}`;
+      return res.json({ ok: true, redirect, token, role: u.role });
+    } catch {
+      return res.json({ ok: true, redirect });
+    }
+  } catch (e) {
+    console.error('Login error:', e);
+    return res.status(500).json({ ok: false, error: 'Server error' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
   const { idNumber, password } = req.body || {};
   if (!idNumber || !password) return res.status(400).json({ ok: false, error: 'Missing credentials' });
 
