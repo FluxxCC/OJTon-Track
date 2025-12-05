@@ -18,6 +18,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <form id="fallback-login" class="form" style="display:none; width:min(92vw,560px); margin:0 auto; text-align:center">
+      <input class="input" type="text" name="id" placeholder="ID number" required autocomplete="username" />
+      <input class="input" type="password" name="password" placeholder="Password" required autocomplete="current-password" />
+      <label style="display:flex;align-items:center;gap:8px;margin:6px 0"><input type="checkbox" name="remember" id="remember" /><span>Keep me signed in</span></label>
+      <button class="role-button" type="submit">Login</button>
+      <button class="role-button" type="button" onclick="(function(){ window.location.href='index.html'; })()">Back</button>
+      <p id="fallback-error" style="color:#b91c1c;font-weight:600;margin:0"></p>
+    </form>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
     <script>
@@ -35,22 +43,56 @@
       }
 
       (function(){
+        function bindFallback(){
+          var form = document.getElementById('fallback-login');
+          var err = document.getElementById('fallback-error');
+          if(!form) return;
+          form.addEventListener('submit', async function(e){
+            e.preventDefault();
+            var idNumber = (form.id && form.id.value || '').trim();
+            var password = (form.password && form.password.value || '').trim();
+            try{
+              var resp = await fetch('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ idNumber, password }) });
+              var data = await resp.json().catch(function(){ return {}; });
+              if(resp.ok && data && data.ok){
+                try {
+                  var remember = !!(form.remember && form.remember.checked);
+                  if (remember) {
+                    localStorage.setItem('userAuth','true');
+                    if (data.token) localStorage.setItem('userToken', data.token);
+                    if (data.role) localStorage.setItem('role', data.role);
+                    try { sessionStorage.removeItem('userAuth'); sessionStorage.removeItem('userToken'); sessionStorage.removeItem('role'); } catch {}
+                  } else {
+                    sessionStorage.setItem('userAuth','true');
+                    if (data.token) sessionStorage.setItem('userToken', data.token);
+                    if (data.role) sessionStorage.setItem('role', data.role);
+                    try { localStorage.removeItem('userAuth'); localStorage.removeItem('userToken'); localStorage.removeItem('role'); } catch {}
+                  }
+                  localStorage.setItem('rememberLogin', remember ? '1' : '0');
+                } catch {}
+                try {
+                  var tkn = data.token || localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+                  await fetch('/api/auth/link', { method:'POST', headers:{ 'Content-Type':'application/json', ...(tkn?{ Authorization:'Bearer '+tkn }:{}) }, body: JSON.stringify({ password }) });
+                } catch {}
+                try {
+                  var sb = window.supabase && window.supabase.createClient ? window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY) : null;
+                  if (sb) { var email = idNumber + '@ojt.local'; await sb.auth.signInWithPassword({ email, password }); }
+                } catch {}
+                var path = (data.redirect || '/');
+                if (typeof path === 'string' && path.length && path[0] !== '/') path = '/' + path;
+                window.location.href = path;
+              } else {
+                err.textContent = (data && (data.error || data.message)) || 'Invalid credentials';
+              }
+            } catch(ex){
+              err.textContent = 'Network error';
+            }
+          });
+        }
         if (!window.React || !window.ReactDOM) {
-          var root = document.getElementById('root');
-          var main = document.createElement('main'); main.className='container centered';
-          var t = document.createElement('h1'); t.className='title'; t.textContent='OJTonTrack';
-          var form = document.createElement('form'); form.className='form';
-          var inpId = document.createElement('input'); inpId.className='input'; inpId.type='text'; inpId.name='id'; inpId.placeholder='ID number'; inpId.required=true; inpId.autocomplete='username';
-          var inpPw = document.createElement('input'); inpPw.className='input'; inpPw.type='password'; inpPw.name='password'; inpPw.placeholder='Password'; inpPw.required=true; inpPw.autocomplete='current-password';
-          var rememberWrap = document.createElement('label'); rememberWrap.style.display='flex'; rememberWrap.style.alignItems='center'; rememberWrap.style.gap='8px'; rememberWrap.style.margin='6px 0';
-          var remember = document.createElement('input'); remember.type='checkbox'; remember.name='remember'; remember.id='remember';
-          var rememberText = document.createElement('span'); rememberText.textContent='Keep me signed in';
-          rememberWrap.appendChild(remember); rememberWrap.appendChild(rememberText);
-          var submit = document.createElement('button'); submit.className='role-button'; submit.type='submit'; submit.textContent='Login';
-          var back = document.createElement('button'); back.className='role-button'; back.type='button'; back.textContent='Back'; back.addEventListener('click', function(){ goBack(); });
-          form.appendChild(inpId); form.appendChild(inpPw); form.appendChild(rememberWrap); form.appendChild(submit); form.appendChild(back);
-          form.addEventListener('submit', async function(e){ e.preventDefault(); try { var idNumber=(inpId.value||'').trim(); var password=(inpPw.value||'').trim(); var resp=await fetch('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ idNumber, password }) }); var data=await resp.json().catch(function(){ return {}; }); if (resp.ok && data && data.ok) { try { sessionStorage.setItem('userAuth','true'); if(data.token) sessionStorage.setItem('userToken', data.token); if(data.role) sessionStorage.setItem('role', data.role); } catch {} try { var tkn=data.token||sessionStorage.getItem('userToken'); await fetch('/api/auth/link', { method:'POST', headers:{ 'Content-Type':'application/json', ...(tkn?{ Authorization:'Bearer '+tkn }:{}) }, body: JSON.stringify({ password }) }); } catch {} try { var sb=window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY); if (sb) { var email=idNumber+'@ojt.local'; await sb.auth.signInWithPassword({ email, password }); } } catch {} var path=data.redirect||'/'; if (typeof path==='string' && path.length && path[0]!=='/') path='/'+path; window.location.href=path; } else { alert(data && data.error ? data.error : 'Invalid credentials'); } } catch(err){ alert('Network error'); } });
-          main.appendChild(t); main.appendChild(form); root.innerHTML=''; root.appendChild(main); return; }
+          var f = document.getElementById('fallback-login');
+          if (f) { f.style.display='block'; bindFallback(); }
+        }
       })();
 
       function Login() {
@@ -231,9 +273,12 @@
     </script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function(){
-          navigator.serviceWorker.register('/service-worker.js').catch(function(){});
-        });
+        var p = location.pathname.toLowerCase();
+        if (!(p.endsWith('/login.html') || p.endsWith('/admin/login.html'))) {
+          window.addEventListener('load', function(){
+            navigator.serviceWorker.register('/service-worker.js').catch(function(){});
+          });
+        }
       }
     </script>
   </body>

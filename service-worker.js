@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = 'static-' + CACHE_VERSION;
 const OFFLINE_URL = '/offline.html';
 
@@ -7,8 +7,6 @@ self.addEventListener('install', event => {
     caches.open(STATIC_CACHE).then(cache => cache.addAll([
       '/',
       '/index.html',
-      '/login.html',
-      '/admin/login.html',
       OFFLINE_URL,
       '/styles.css',
       '/assets/wave-poster.svg'
@@ -35,17 +33,25 @@ self.addEventListener('fetch', event => {
 
   const isDocument = req.mode === 'navigate';
   if (isDocument) {
-    event.respondWith(
-      fetch(req).then(resp => {
-        if (resp && resp.ok && sameOrigin && /^https?:/.test(req.url)) {
-          const copy = resp.clone();
-          caches.open(STATIC_CACHE).then(cache => { try { cache.put(req, copy); } catch (e) {} });
-        }
-        return resp;
-      }).catch(() =>
-        caches.match(req).then(c => c || caches.match('/index.html').then(ix => ix || caches.match(OFFLINE_URL)))
-      )
-    );
+    const p = url.pathname.toLowerCase();
+    const isLogin = p.endsWith('/login.html') || p.endsWith('/admin/login.html');
+    if (isLogin) {
+      event.respondWith(
+        fetch(req).catch(() => caches.match(OFFLINE_URL))
+      );
+    } else {
+      event.respondWith(
+        fetch(req).then(resp => {
+          if (resp && resp.ok && sameOrigin && /^https?:/.test(req.url)) {
+            const copy = resp.clone();
+            caches.open(STATIC_CACHE).then(cache => { try { cache.put(req, copy); } catch (e) {} });
+          }
+          return resp;
+        }).catch(() =>
+          caches.match(req).then(c => c || caches.match('/index.html').then(ix => ix || caches.match(OFFLINE_URL)))
+        )
+      );
+    }
     return;
   }
 

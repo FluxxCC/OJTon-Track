@@ -149,9 +149,12 @@
     </script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function(){
-          navigator.serviceWorker.register('/service-worker.js').catch(function(){});
-        });
+        var p = location.pathname.toLowerCase();
+        if (!(p.endsWith('/login.html') || p.endsWith('/admin/login.html'))) {
+          window.addEventListener('load', function(){
+            navigator.serviceWorker.register('/service-worker.js').catch(function(){});
+          });
+        }
       }
     </script>
   </body>
