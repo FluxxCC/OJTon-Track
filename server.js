@@ -206,6 +206,18 @@ app.get('/service-worker.js', (req, res) => {
 app.get('/offline.html', (req, res) => {
   try { res.type('text/html'); res.sendFile(path.join(__dirname, 'offline.html')); } catch { res.status(404).send('Not Found'); }
 });
+app.get(/^\/assets\/(.+)$/, (req, res) => {
+  try { const rel = req.params[0]; res.sendFile(path.join(__dirname, 'assets', rel)); } catch { res.status(404).send('Not Found'); }
+});
+app.get(/^\/icons\/(.+)$/, (req, res) => {
+  try { const rel = req.params[0]; res.sendFile(path.join(__dirname, 'icons', rel)); } catch { res.status(404).send('Not Found'); }
+});
+app.get('/favicon.ico', (req, res) => {
+  try { res.type('image/png'); res.sendFile(path.join(__dirname, 'icons', 'icon-192.png')); } catch { res.status(404).send('Not Found'); }
+});
+app.get('/favicon.png', (req, res) => {
+  try { res.type('image/png'); res.sendFile(path.join(__dirname, 'icons', 'icon-192.png')); } catch { res.status(404).send('Not Found'); }
+});
 
 // Health endpoints for Render
 app.get('/healthz', (req, res) => {
