@@ -270,6 +270,18 @@
       }
 
       if (window.React && window.ReactDOM) { const root = ReactDOM.createRoot(document.getElementById('root')); root.render(React.createElement(Login)); }
+      (function(){
+        var rootEl = document.getElementById('root');
+        var fallbackEl = document.getElementById('fallback-login');
+        function showFallback(){ if (fallbackEl) { fallbackEl.style.display='block'; } }
+        try {
+          setTimeout(function(){
+            if (rootEl && (!rootEl.firstChild || (rootEl.firstChild && rootEl.firstChild.childNodes && rootEl.firstChild.childNodes.length === 0))) {
+              showFallback();
+            }
+          }, 600);
+        } catch {}
+      })();
     </script>
     <script>
       if ('serviceWorker' in navigator) {

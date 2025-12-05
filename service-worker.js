@@ -36,9 +36,7 @@ self.addEventListener('fetch', event => {
     const p = url.pathname.toLowerCase();
     const isLogin = p.endsWith('/login.html') || p.endsWith('/admin/login.html');
     if (isLogin) {
-      event.respondWith(
-        fetch(req).catch(() => caches.match(OFFLINE_URL))
-      );
+      return; // Let browser handle login pages without SW involvement
     } else {
       event.respondWith(
         fetch(req).then(resp => {
