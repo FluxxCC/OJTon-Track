@@ -7,6 +7,33 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .eval-table-wrap{ width:100%; overflow-x:auto; background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+      table.eval-table{ width:100%; border-collapse:collapse; }
+      table.eval-table th, table.eval-table td{ padding:8px; }
+      table.eval-table th{ white-space:nowrap; }
+      table.eval-table thead th{ border-bottom:1px solid #e5e7eb; }
+      table.eval-table thead{ display:none; }
+      table.eval-table th:nth-child(1), table.eval-table td:nth-child(1){ display:none; }
+      .accordion-section{ border:1px solid #e5e7eb; border-radius:12px; background:#fff; margin:10px 0; overflow:hidden; }
+      .accordion-header{ width:100%; text-align:left; padding:12px 14px; background:#f9fafb; border:none; font-weight:700; font-size:16px; cursor:pointer; }
+      .accordion-content{ display:none; padding:10px; }
+      .accordion-section.open .accordion-content{ display:block; }
+      .accordion-section.open .accordion-header{ background:#eef2ff; }
+      
+      @media (max-width: 768px){
+        .recent-scroll.small{ max-height:none; }
+        .accordion-header{ font-size:15px; padding:10px 12px; }
+      }
+      @media (max-width: 640px){
+        table.eval-table{ min-width:0; }
+        table.eval-table tbody tr{ display:grid; grid-template-columns: 1fr; gap:6px; padding:8px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; margin-bottom:8px; }
+        table.eval-table td{ padding:0; }
+        #ratingDate{ width:100%; max-width:none; }
+        .attendance-card{ padding:10px; }
+        .input{ font-size:14px; }
+      }
+    </style>
   </head>
   <body>
     <main class="container centered">
@@ -21,12 +48,31 @@
           <div class="recent-scroll small" style="max-height:70vh;overflow-y:auto">
 
             <div class="recent-label">Performance Evaluation</div>
+            <div data-step="1" style="display:grid;grid-template-columns:auto 1fr;align-items:center;gap:8px;margin-top:8px">
+              <div class="stat-label" style="margin:0">Date of Rating:</div>
+              <input id="ratingDate" class="input" type="date" style="max-width:240px" />
+            </div>
+            <div data-step="1" style="font-weight:700;margin-top:10px">Put Proper Grades</div>
+            <div data-step="1" style="font-size:12px;opacity:0.8">(Note: Put Rating. Please do not check)</div>
+            <div class="eval-table-wrap" data-step="1" style="padding:12px;">
+              <div class="stat-label" style="margin-bottom:6px">Grade Interpretation</div>
+              <div style="font-size:12px; line-height:1.4">
+                <div>Excellent 99–95</div>
+                <div>Very Good 94–86</div>
+                <div>Good 85–79</div>
+                <div>Fair 78–75</div>
+              </div>
+            </div>
+            <div data-step="1" style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:8px;margin-bottom:4px">Quantity of Work</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="2">
+              <button class="accordion-header">Quantity of Work</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -34,22 +80,29 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Considers volume of assignment completed on time as compared with standards</td>
+                  <td style="padding:6px">Considers volume of assignment completed on time as compared with standards.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Is willing to replace an absent trainee if needed</td>
+                  <td style="padding:6px">Is willing to replace an absent trainee if needed.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Quality of Work</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="2">
+              <button class="accordion-header">Quality of Work</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -57,22 +110,29 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Serious in his/her work, accurate/enjoys what he/she is doing</td>
+                  <td style="padding:6px">Serious in his/her work, accurate/enjoy what he/she is doing.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Follows good housekeeping even without order of the superior</td>
+                  <td style="padding:6px">Follows good housekeeping even if without order of the superior.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Job Competence</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="2">
+              <button class="accordion-header">Job Competence</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -80,17 +140,24 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Considers knowledge and skills required of the job</td>
+                  <td style="padding:6px">Considers knowledge and skills required of the job.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Dependability</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="2">
+              <button class="accordion-header">Dependability</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -98,22 +165,29 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Considers reliability in following instructions and procedure</td>
+                  <td style="padding:6px">Considers reliability in following instructions and procedure.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Can be depended upon when things go wrong</td>
+                  <td style="padding:6px">Can be depended upon when things go wrong.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Initiative</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Initiative</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -121,22 +195,29 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Goes out of his/her way to perform tasks that will help the company even if not his/her responsibility</td>
+                  <td style="padding:6px">Goes out his/her way to perform things which will help the company even if it is not his/her responsibility.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Volunteers to do the job when needed</td>
+                  <td style="padding:6px">Volunteers to do the job when needed.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Cooperativeness</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Cooperative</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -144,27 +225,34 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Considers how well he/she can get along with co-trainees</td>
+                  <td style="padding:6px">Considers how well he/she can get along with his/her co-trainee.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Considers how well he/she can get along with superiors</td>
+                  <td style="padding:6px">Considers how well he/she can get along with his/her superior.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">3</td>
-                  <td style="padding:6px">Considers how well he/she can get along with owners/managers</td>
+                  <td style="padding:6px">Considers how well he/she can get along with owner/managers.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Loyalty</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Loyalty</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -172,27 +260,34 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Protects the company</td>
+                  <td style="padding:6px">Protects the company.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Can be trusted</td>
+                  <td style="padding:6px">Can be trusted.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">3</td>
-                  <td style="padding:6px">Follows policies/objectives of the company</td>
+                  <td style="padding:6px">Follows policies/objectives of the company.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Judgment</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Judgment</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -200,22 +295,29 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Considers ability to grasp problems; can follow instructions</td>
+                  <td style="padding:6px">Considers ability to grasp problem. Can follow instruction.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Knows how to decide when needed</td>
+                  <td style="padding:6px">Knows how to decide when needed.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Attendance</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Attendance</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -223,22 +325,29 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Regular in work schedule; not absent without prior leave</td>
+                  <td style="padding:6px">Regular in his/her work schedule. Does not absent without prior leave.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Always punctual; does not come in late</td>
+                  <td style="padding:6px">Always punctual in work schedule. Does not come in late.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Customer Service</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Customer Service</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -246,27 +355,34 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Practices good customer service</td>
+                  <td style="padding:6px">Practices good customer service.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">2</td>
-                  <td style="padding:6px">Never argues/fights with customers</td>
+                  <td style="padding:6px">Never argues/fights with customer.</td>
                   <td style="padding:6px"></td>
                 </tr>
                 <tr>
                   <td style="padding:6px">3</td>
-                  <td style="padding:6px">Greets customers</td>
+                  <td style="padding:6px">Greets customer(s).</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
 
-            <div style="font-weight:700;margin-top:12px;margin-bottom:4px">Overall Rating</div>
-            <table style="width:100%;border-collapse:collapse">
+            <div class="accordion-section" data-step="3">
+              <button class="accordion-header">Overall Rating</button>
+              <div class="accordion-content">
+            <div class="eval-table-wrap">
+            <table data-grade="true" class="eval-table">
               <thead>
                 <tr>
-                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Item</th>
+                  <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">No.</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Description</th>
                   <th style="text-align:left;border-bottom:1px solid #e5e7eb;padding:6px">Grade</th>
                 </tr>
@@ -274,11 +390,21 @@
               <tbody>
                 <tr>
                   <td style="padding:6px">1</td>
-                  <td style="padding:6px">Considers the practice as a whole</td>
+                  <td style="padding:6px">Considers the practice as a whole.</td>
                   <td style="padding:6px"></td>
                 </tr>
               </tbody>
             </table>
+            </div>
+              </div>
+            </div>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0"></div>
+            <div class="eval-table-wrap" data-step="3" style="margin-top:8px">
+              <div style="font-weight:700;margin-bottom:4px">Comments/Remarks:</div>
+              <textarea id="commentsInput" class="input" rows="4" placeholder="Write comments here" style="width:100%;resize:vertical"></textarea>
+            </div>
+
+            
 
           </div>
         </div>
@@ -300,18 +426,34 @@
         </a>
       </div>
     </nav>
+    <div id="evalSubmitConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.55);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:1rem">
+      <div style="background:#fff;padding:16px;border-radius:12px;width:min(92vw,560px);display:flex;flex-direction:column;gap:10px;position:relative">
+        <div style="font-weight:800;text-align:center">Are you sure you want to submit this evaluation?</div>
+        <div style="font-size:0.95rem;color:#111827;text-align:center">Please review your ratings carefully, this action cannot be undone.</div>
+        <div class="buttons" style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px">
+          <button id="evalSubmitProceed" class="role-button" type="button" style="width:94%;margin:0 auto;text-align:center">Proceed</button>
+          <button id="evalSubmitCancel" class="role-button" type="button" style="width:94%;margin:0 auto;text-align:center">Cancel</button>
+        </div>
+      </div>
+    </div>
     <script>
       function authHeaders(json=false){ const t = localStorage.getItem('userToken') || sessionStorage.getItem('userToken'); const h = t ? { Authorization: 'Bearer ' + t } : {}; return json ? { 'Content-Type': 'application/json', ...h } : h; }
       async function ensureAuth() { const r = await fetch('/api/me', { headers: authHeaders() }); if (!r.ok) { window.location.replace('/index.html'); throw new Error('auth'); } return r.json(); }
       function getParam(name){ const u=new URL(window.location.href); return u.searchParams.get(name); }
-      function initInputs(){ const bodies = Array.from(document.querySelectorAll('table tbody')); bodies.forEach(tb => { Array.from(tb.querySelectorAll('tr')).forEach(tr => { const cells = tr.querySelectorAll('td'); if (cells && cells.length >= 3) { const inp = document.createElement('input'); inp.type='number'; inp.min='0'; inp.max='100'; inp.step='1'; inp.placeholder='0-100'; inp.className='input'; inp.style.width='100%'; cells[2].innerHTML=''; cells[2].appendChild(inp); } }); }); }
-      function collectData(){ const sections=[]; const content=document.querySelector('.attendance-card'); if (!content) return []; let current=''; Array.from(content.children).forEach(node => { const t=node && node.textContent ? String(node.textContent).trim() : ''; const isHeading = node && node.tagName==='DIV' && node.style && String(node.style.fontWeight||'')==='700'; if (isHeading) { current=t; sections.push({ name: current, rows: [] }); } else if (node && node.tagName==='TABLE') { const sec = sections[sections.length-1] || { name: '', rows: [] }; const rows = Array.from(node.querySelectorAll('tbody tr')).map(tr => { const cells=tr.querySelectorAll('td'); const item=cells[0]?cells[0].textContent.trim():''; const desc=cells[1]?cells[1].textContent.trim():''; const gradeInp=cells[2]?cells[2].querySelector('input'):null; const grade=gradeInp?Number(gradeInp.value||0):0; return { item, description: desc, grade }; }); sec.rows.push(...rows); if (!sections.includes(sec)) sections.push(sec); }
-      }); return sections; }
+      function initInputs(){ const bodies = Array.from(document.querySelectorAll('table[data-grade="true"] tbody')); bodies.forEach(tb => { Array.from(tb.querySelectorAll('tr')).forEach(tr => { const cells = tr.querySelectorAll('td'); if (cells && cells.length >= 3) { const inp = document.createElement('input'); inp.type='number'; inp.min='0'; inp.max='100'; inp.step='1'; inp.placeholder='0-100'; inp.className='input'; inp.style.width='100%'; cells[2].innerHTML=''; cells[2].appendChild(inp); } }); }); }
+      function validateGrades(){ let ok=true; const dateEl=document.getElementById('ratingDate'); const dateVal=String(dateEl&&dateEl.value||'').trim(); if (!dateVal) ok=false; document.querySelectorAll('table[data-grade="true"] tbody tr').forEach(tr => { const inp=tr.querySelector('td:nth-child(3) input'); const v=String(inp&&inp.value||'').trim(); const n=Number(v); const valid = v!=='' && isFinite(n) && n>=0 && n<=100; if (!valid) { ok=false; if (inp) { inp.style.borderColor='#ef4444'; } } else { if (inp) { inp.style.borderColor=''; } } }); return ok; }
+      function collectData(){ const sections=[]; document.querySelectorAll('.accordion-section').forEach(secEl => { const nameEl = secEl.querySelector('.accordion-header'); const name = nameEl ? String(nameEl.textContent||'').trim() : ''; const rows=[]; secEl.querySelectorAll('table[data-grade="true"] tbody tr').forEach(tr => { const cells=tr.querySelectorAll('td'); const item=cells[0]?cells[0].textContent.trim():''; const desc=cells[1]?cells[1].textContent.trim():''; const gradeInp=cells[2]?cells[2].querySelector('input'):null; const grade=gradeInp?Number(gradeInp.value||0):0; rows.push({ item, description: desc, grade }); }); sections.push({ name, rows }); }); const dateEl=document.getElementById('ratingDate'); const commentsEl=document.getElementById('commentsInput'); const date=String(dateEl&&dateEl.value||'').trim(); const comments=String(commentsEl&&commentsEl.value||'').trim(); return { date, sections, comments }; }
+      function setupAccordions(){ const headers = Array.from(document.querySelectorAll('.accordion-header')); headers.forEach(h => { const sec = h.closest('.accordion-section'); h.addEventListener('click', function(){ if (!sec) return; sec.classList.toggle('open'); }); }); }
       document.addEventListener('DOMContentLoaded', async function(){
         try { await ensureAuth(); } catch { return; }
         const id=getParam('id'); const meta=document.getElementById('studentMeta'); if (meta) { try { const r = await fetch('/api/supervisor/students', { headers: authHeaders() }); const j = await r.json().catch(()=>({})); const arr = r.ok && j.ok ? (Array.isArray(j.data)?j.data:[]) : []; const nameMap={}; for (const s of arr) { const sid=s.idNumber||s.idnumber||''; if (sid) nameMap[sid]=s.name||sid; } const name = nameMap[id] || id || ''; meta.textContent = name ? (name + ' (' + id + ')') : (id || ''); } catch { meta.textContent = id || ''; } }
+        setupAccordions();
         initInputs();
-        const actionsWrap = document.createElement('div'); actionsWrap.style.display='grid'; actionsWrap.style.gridTemplateColumns='1fr'; actionsWrap.style.gap='8px'; actionsWrap.style.margin='12px 0'; const saveBtn=document.createElement('button'); saveBtn.className='role-button primary'; saveBtn.textContent='Save Evaluation'; saveBtn.addEventListener('click', async function(){ try { const st = await fetch('/api/evaluation/status/'+encodeURIComponent(id), { headers: authHeaders(), cache:'no-store' }); const sj = await st.json().catch(()=>({})); const enabled = !!(st.ok && sj.enabled); if (!enabled) { alert('Evaluation disabled by instructor'); return; } const form = collectData(); const r = await fetch('/api/evaluations', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ idNumber: id, form }) }); const j = await r.json().catch(()=>({})); if (r.ok && j.ok) { alert('Saved'); } else { alert(j.error || 'Failed to save'); } } catch { alert('Network error'); } }); actionsWrap.appendChild(saveBtn); const card = document.querySelector('.attendance-card'); if (card) card.appendChild(actionsWrap);
+        try { const d=document.getElementById('ratingDate'); if (d) d.required=true; } catch {}
+        const actionsWrap = document.createElement('div'); actionsWrap.style.display='grid'; actionsWrap.style.gridTemplateColumns='1fr'; actionsWrap.style.gap='8px'; actionsWrap.style.margin='12px 0'; const saveBtn=document.createElement('button'); saveBtn.className='role-button primary'; saveBtn.textContent='Submit Evaluation'; saveBtn.addEventListener('click', function(){ if (!validateGrades()) { alert('Please fill all grades (0–100) and Date of Rating'); return; } const modal=document.getElementById('evalSubmitConfirmModal'); const proceed=document.getElementById('evalSubmitProceed'); const cancel=document.getElementById('evalSubmitCancel'); if (!modal||!proceed||!cancel) return; modal.style.display='flex'; const onProceed=async function(){ proceed.removeEventListener('click', onProceed); cancel.removeEventListener('click', onCancel); modal.style.display='none'; try { const st = await fetch('/api/evaluation/status/'+encodeURIComponent(id), { headers: authHeaders(), cache:'no-store' }); const sj = await st.json().catch(()=>({})); const enabled = !!(st.ok && sj.enabled); if (!enabled) { alert('Evaluation disabled by instructor'); return; } const data = collectData(); const r = await fetch('/api/evaluations', { method:'POST', headers: authHeaders(true), body: JSON.stringify({ idNumber: id, form: data.sections, date: data.date, comments: data.comments }) }); const j = await r.json().catch(()=>({})); if (r.ok && j.ok) { try { localStorage.setItem('eval:completed:'+id, String(Date.now())); } catch {} window.location.replace('/supervisor/students-logs.html'); } else { alert(j.error || 'Failed to save'); } } catch { alert('Network error'); } };
+        const onCancel=function(){ proceed.removeEventListener('click', onProceed); cancel.removeEventListener('click', onCancel); modal.style.display='none'; };
+        proceed.addEventListener('click', onProceed); cancel.addEventListener('click', onCancel); modal.addEventListener('click', function(e){ if (e.target===modal) onCancel(); }); }); actionsWrap.appendChild(saveBtn); const card = document.querySelector('.attendance-card'); if (card) card.appendChild(actionsWrap);
+        
       });
       (function(){ const nav = document.querySelector('.student-nav'); if (!nav) return; nav.classList.add('slideable'); let startY=null, lastY=null, moved=0; function start(e){ const t=e.touches?e.touches[0]:e; startY=t.clientY; lastY=startY; moved=0; } function move(e){ const t=e.touches?e.touches[0]:e; lastY=t.clientY; moved=lastY-startY; } function end(){ if (moved>30) { document.body.classList.add('nav-hidden'); } else if (moved<-30) { document.body.classList.remove('nav-hidden'); } else { document.body.classList.toggle('nav-hidden'); } startY=null; lastY=null; moved=0; } nav.addEventListener('touchstart', start, { passive:true }); nav.addEventListener('touchmove', move, { passive:true }); nav.addEventListener('touchend', end); nav.addEventListener('mousedown', start); nav.addEventListener('mousemove', function(e){ if (startY!==null) move(e); }); nav.addEventListener('mouseup', end); })();
     </script>

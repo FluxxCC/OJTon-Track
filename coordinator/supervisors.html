@@ -181,7 +181,7 @@
         function ModalEdit() {
           if (!editing) return null;
           React.useEffect(() => { function onKey(e) { if (e.key === 'Escape') setEditing(null); } window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [editing]);
-          function submit(e) { e.preventDefault(); const f = e.currentTarget; const payload = { name: (f.name?.value || '').trim(), company: (f.company?.value || '').trim() || null, location: (f.location?.value || '').trim() || null, section: (f.section?.value || '').trim() || null, password: (f.password?.value || '').trim() || undefined }; if (!payload.name) { alert('Name is required'); return; } updateSupervisor(editing.idNumber, payload).then(() => setEditing(null)); }
+          function submit(e) { e.preventDefault(); const f = e.currentTarget; const payload = { name: (f.name?.value || '').trim(), company: (f.company?.value || '').trim() || null, location: (f.location?.value || '').trim() || null, section: (f.section?.value || '').trim() || null }; if (!payload.name) { alert('Name is required'); return; } updateSupervisor(editing.idNumber, payload).then(() => setEditing(null)); }
           const overlayStyle = { position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 0 };
           const modalStyle = { width: 'min(92vw, 560px)', background: '#ffffff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.25)', padding: '1rem', boxSizing: 'border-box', margin: 0 };
           return React.createElement('div', { key: 'overlay', style: overlayStyle, onClick: () => setEditing(null) }, [
@@ -193,7 +193,7 @@
                   React.createElement('input', { key: 'company', className: 'input', name: 'company', defaultValue: editing.company, placeholder: 'Company', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
                   React.createElement('input', { key: 'location', className: 'input', name: 'location', defaultValue: editing.location, placeholder: 'Location', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
                   React.createElement('input', { key: 'section', className: 'input', name: 'section', defaultValue: editing.section, placeholder: 'Section (optional)', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
-                  React.createElement('input', { key: 'password', className: 'input', name: 'password', type: 'password', placeholder: 'New Password (optional)', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
+                  
                   React.createElement('div', { key: 'actions', className: 'buttons', style: { display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', justifyItems: 'center', width: '100%', margin: 0 } }, [
                     React.createElement('button', { key: 'save', className: 'role-button', type: 'submit', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }, 'Save Changes'),
                     React.createElement('button', { key: 'cancel', className: 'role-button', type: 'button', onClick: () => setEditing(null), style: { width: '94%', margin: '0 auto', textAlign: 'center' } }, 'Cancel')

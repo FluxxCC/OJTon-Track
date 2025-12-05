@@ -195,7 +195,6 @@
             e.preventDefault();
             const f = e.currentTarget;
             const name = (f.name?.value || '').trim();
-            const password = (f.password?.value || '').trim() || undefined;
             let sectionCodes = [];
             try { sectionCodes = JSON.parse(f.sections?.value || '[]'); } catch { sectionCodes = []; }
             const uniqueCodes = Array.isArray(sectionCodes) ? Array.from(new Set(sectionCodes.map(String).filter(Boolean))) : [];
@@ -216,7 +215,7 @@
                 if (!r2.ok || !j2.ok) { alert(j2.error || 'Failed to assign courses'); return; }
               }
             } catch {}
-            const payload = { name, password };
+            const payload = { name };
             updateInstructor(editing.idNumber, payload).then(() => { setEditing(null); reload(); });
           }
           const overlayStyle = { position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 0 };
@@ -228,7 +227,7 @@
                 React.createElement('form', { key: 'form', className: 'form', onSubmit: submit, style: { display: 'grid', gap: '0.75rem', justifyItems: 'center', textAlign: 'center', marginTop: 0, width: '100%' } }, [
                   React.createElement('input', { key: 'name', className: 'input', name: 'name', defaultValue: editing.name, placeholder: 'Name', required: true, style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
                   React.createElement(CustomSelect, { key: 'sections', name: 'sections', multiple: true, placeholder: 'Assign Course & Section(s)', options: sectionOptions, required: true, defaultValue: assignedSections }),
-                  React.createElement('input', { key: 'password', className: 'input', name: 'password', type: 'password', placeholder: 'New Password (optional)', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
+                  
                   React.createElement('div', { key: 'actions', className: 'buttons', style: { display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', justifyItems: 'center', width: '100%', margin: 0 } }, [
                     React.createElement('button', { key: 'save', className: 'role-button', type: 'submit', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }, 'Save Changes'),
                     React.createElement('button', { key: 'cancel', className: 'role-button', type: 'button', onClick: () => setEditing(null), style: { width: '94%', margin: '0 auto', textAlign: 'center' } }, 'Cancel')

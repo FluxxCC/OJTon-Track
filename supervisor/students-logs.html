@@ -14,8 +14,6 @@
         <h2 class="welcome">Student Logs</h2>
         <div class="attendance-card" style="margin-top:0.75rem">
           <div style="display:flex;align-items:center;gap:8px;justify-content:flex-start;font-size:18px;font-weight:700;margin-bottom:8px">
-            <a href="/supervisor/dashboard.html" style="font-size:12px;padding:6px 10px;border:1px solid #ccc;border-radius:999px;color:#111;text-decoration:none;background:#fff;display:inline-flex;align-items:center;gap:6px">⬅️ <span>Back</span></a>
-            <span style="opacity:0.5">|</span>
             <div>Students</div>
           </div>
           <div class="search-wrap" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;position:relative">
@@ -136,7 +134,19 @@
               ev.style.justifySelf = 'center';
               ev.style.marginTop = '6px';
               ev.textContent = 'Checking…';
-              (async function(){ try { const r = await apiFetch('/api/evaluation/status/'+encodeURIComponent(id), { headers: authHeaders(), cache: 'no-store' }); const j = await r.json().catch(()=>({})); const enabled = !!(r.ok && j.enabled); if (enabled) { ev.textContent = 'Evaluate Student'; ev.style.background = '#22c55e'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ window.location.href = '/supervisor/student-evaluation.html?id=' + encodeURIComponent(id); }); } else { ev.textContent = 'Evaluation Disabled'; ev.style.background = '#ef4444'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ openEvalNotEnabled(name, id); }); } } catch { ev.textContent = 'Evaluation Disabled'; ev.style.background = '#ef4444'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ openEvalNotEnabled(name, id); }); } })();
+              (async function(){
+                try {
+                  const sR = await apiFetch('/api/evaluations/'+encodeURIComponent(id)+'/summary', { headers: authHeaders(), cache: 'no-store' });
+                  const sJ = await sR.json().catch(()=>({}));
+                  const hasEval = !!(sR.ok && sJ.ok && Array.isArray(sJ.data?.summary) && (sJ.data.summary.length>0));
+                  if (hasEval) { ev.textContent = 'Evaluation Completed'; ev.style.background = '#111827'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ openEvalCompleted(name, id); }); return; }
+                  const r = await apiFetch('/api/evaluation/status/'+encodeURIComponent(id), { headers: authHeaders(), cache: 'no-store' });
+                  const j = await r.json().catch(()=>({}));
+                  const enabled = !!(r.ok && j.enabled);
+                  if (enabled) { ev.textContent = 'Evaluate Student'; ev.style.background = '#22c55e'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ window.location.href = '/supervisor/student-evaluation.html?id=' + encodeURIComponent(id); }); }
+                  else { ev.textContent = 'Evaluation Disabled'; ev.style.background = '#ef4444'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ openEvalNotEnabled(name, id); }); }
+                } catch { ev.textContent = 'Evaluation Disabled'; ev.style.background = '#ef4444'; ev.style.color = '#fff'; ev.addEventListener('click', function(){ openEvalNotEnabled(name, id); }); }
+              })();
               buttons.appendChild(a1);
               buttons.appendChild(b2);
               buttons.appendChild(ev);
@@ -146,7 +156,7 @@
             });
           }
           render();
-          window.addEventListener('storage', function(e){ try { if (e && e.key && /^eval:update:/.test(e.key)) render(); } catch {} });
+          window.addEventListener('storage', function(e){ try { if (e && e.key && /^eval:(update|completed):/.test(e.key)) render(); } catch {} });
           search.addEventListener('input', render);
         } catch { box.innerHTML = '<div class="empty">Error loading students</div>'; }
       });
@@ -161,6 +171,21 @@
         const box = document.createElement('div');
         box.style.background = '#fff'; box.style.padding = '16px'; box.style.borderRadius = '12px'; box.style.width = 'clamp(280px,80vw,480px)'; box.style.maxHeight = '85vh'; box.style.display = 'flex'; box.style.flexDirection = 'column'; box.style.gap = '10px'; box.style.alignItems='center';
         const header = document.createElement('div'); header.style.fontWeight='800'; header.style.fontSize='1.05rem'; header.style.textAlign='center'; header.textContent='Instructor has not enabled evaluation';
+        const actions = document.createElement('div'); actions.style.display='grid'; actions.style.gridTemplateColumns='1fr'; actions.style.gap='8px'; actions.style.justifyItems='center';
+        const close = document.createElement('button'); close.className='role-button'; close.textContent='Close';
+        close.addEventListener('click', function(){ overlay.remove(); });
+        actions.appendChild(close);
+        overlay.addEventListener('click', function(e){ if (e.target===overlay) overlay.remove(); });
+        box.addEventListener('click', function(e){ e.stopPropagation(); });
+        box.appendChild(header); box.appendChild(actions);
+        document.body.appendChild(overlay); overlay.appendChild(box);
+      }
+      function openEvalCompleted(name, id){
+        const existing = document.getElementById('evalCompletedModal'); if (existing) existing.remove();
+        const overlay = document.createElement('div'); overlay.id='evalCompletedModal'; overlay.className='open';
+        const box = document.createElement('div');
+        box.style.background = '#fff'; box.style.padding = '16px'; box.style.borderRadius = '12px'; box.style.width = 'clamp(280px,80vw,480px)'; box.style.maxHeight = '85vh'; box.style.display = 'flex'; box.style.flexDirection = 'column'; box.style.gap = '10px'; box.style.alignItems='center';
+        const header = document.createElement('div'); header.style.fontWeight='800'; header.style.fontSize='1.05rem'; header.style.textAlign='center'; header.textContent='Evaluation is completed';
         const actions = document.createElement('div'); actions.style.display='grid'; actions.style.gridTemplateColumns='1fr'; actions.style.gap='8px'; actions.style.justifyItems='center';
         const close = document.createElement('button'); close.className='role-button'; close.textContent='Close';
         close.addEventListener('click', function(){ overlay.remove(); });

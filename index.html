@@ -27,16 +27,17 @@
         var hasReact = !!(window.React && window.ReactDOM);
         if (hasReact) {
           function RoleButton(props){ return React.createElement('button', { className:'role-button', onClick: props.onClick }, props.label); }
-          function App(){ const roles=['COORDINATOR','INSTRUCTOR','SUPERVISOR','STUDENT']; return React.createElement('main', { className:'container centered' }, [ React.createElement('h1', { key:'title', className:'title' }, 'OJTonTrack'), React.createElement('div', { key:'buttons', className:'buttons' }, roles.map(function(r){ return React.createElement(RoleButton, { key:r, label:r, onClick:function(){ navigateToLogin(r); } }); })) ]); }
+          function App(){ const roles=['COORDINATOR','INSTRUCTOR','SUPERVISOR','STUDENT']; return React.createElement('main', { className:'container centered' }, [ React.createElement('img', { key:'logo', src:'/assets/CITE.png', alt:'CITE logo', style:{ width:'min(40vw,160px)', height:'auto', display:'block', margin:'0 auto 8px', objectFit:'contain' } }), React.createElement('h1', { key:'title', className:'title' }, 'OJTonTrack'), React.createElement('div', { key:'buttons', className:'buttons' }, roles.map(function(r){ return React.createElement(RoleButton, { key:r, label:r, onClick:function(){ navigateToLogin(r); } }); })) ]); }
           var root = ReactDOM.createRoot(document.getElementById('root')); root.render(React.createElement(App));
           return;
         }
         var rootEl = document.getElementById('root');
         var main = document.createElement('main'); main.className='container centered';
+        var logo = document.createElement('img'); logo.src='/assets/CITE.png'; logo.alt='CITE logo'; logo.style.width='min(40vw,160px)'; logo.style.height='auto'; logo.style.display='block'; logo.style.margin='0 auto 8px'; logo.style.objectFit='contain';
         var t = document.createElement('h1'); t.className='title'; t.textContent='OJTonTrack';
         var btns = document.createElement('div'); btns.className='buttons';
         ['COORDINATOR','INSTRUCTOR','SUPERVISOR','STUDENT'].forEach(function(r){ var b=document.createElement('button'); b.className='role-button'; b.textContent=r; b.addEventListener('click', function(){ navigateToLogin(r); }); btns.appendChild(b); });
-        main.appendChild(t); main.appendChild(btns);
+        main.appendChild(logo); main.appendChild(t); main.appendChild(btns);
         rootEl.innerHTML=''; rootEl.appendChild(main);
       })();
     </script>

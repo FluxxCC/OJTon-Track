@@ -22,6 +22,7 @@
             <div id="tabBar" style="display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:4px;width:100%">
               <span id="tabAttendance" style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:700;color:#2563eb;cursor:pointer">Attendance</span>
               <span id="tabDetails" style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer">Reports</span>
+              <span id="tabEvaluation" style="flex:1;text-align:center;padding:8px 0;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer">Evaluation</span>
             </div>
             <div id="evalRow" style="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px">
               <div style="font-weight:700;color:#111">TURN ON EVALUATION</div>
@@ -55,12 +56,15 @@
             <input id="searchInput" class="input" type="text" placeholder="Search logs…" style="width:100%;margin-top:8px;padding-left:12px;border:1px solid #ccc" />
           </div>
           <div id="slideWrap" style="width:100%;overflow:hidden;border-radius:12px">
-            <div id="slideTrack" style="display:flex;width:200%;transition:transform 240ms ease">
-              <div style="width:50%">
+            <div id="slideTrack" style="display:flex;width:300%;transition:transform 240ms ease">
+              <div style="width:33.3333%">
                 <div id="content" class="recent-scroll small" style="max-height:60vh;overflow-y:auto"><div>Loading…</div></div>
               </div>
-              <div style="width:50%">
+              <div style="width:33.3333%">
                 <div id="contentDetails" class="recent-scroll small" style="max-height:60vh;overflow-y:auto"><div>Loading…</div></div>
+              </div>
+              <div style="width:33.3333%">
+                <div id="contentEvaluation" class="recent-scroll small" style="max-height:60vh;overflow-y:auto"><div>Loading…</div></div>
               </div>
             </div>
           </div>
@@ -70,7 +74,7 @@
     <div id="photoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
       <div id="photoBox" style="background:#fff;padding:10px;border-radius:10px;max-width:90%;max-height:85vh;display:flex;flex-direction:column;align-items:center">
         <img id="photoModalImg" src="" alt="photo" style="max-width:100%;max-height:75vh;border-radius:8px" />
-        <button id="photoClose" class="role-button" style="margin-top:8px;padding:6px 12px">Close</button>
+        <button id="photoClose" class="role-button outline" style="width:auto;margin-top:10px;padding:6px 14px;border-radius:999px">Close</button>
       </div>
     </div>
     <div id="evalNoticeModal" style="display:none;position:fixed;inset:0;background:#fff;z-index:1000;align-items:center;justify-content:center">
@@ -81,7 +85,7 @@
     </div>
     <div id="evalConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
       <div style="background:#fff;color:#000;padding:16px;border-radius:12px;width:clamp(280px,80vw,520px);display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center">
-        <div id="evalConfirmText" class="subtitle" style="font-size: 0.95rem; font-weight: 700">Are you sure you want to turn on evaluation? The student has not reached the required 486 hours.</div>
+        <div id="evalConfirmText" class="subtitle" style="font-size: 0.95rem; font-weight: 700; color:#000">Are you sure you want to turn on evaluation? The student has not reached the required 486 hours.</div>
         <div class="buttons" style="display:flex;gap:8px;justify-content:center;width:100%">
           <button id="evalConfirmNo" class="role-button" style="min-width:100px">Cancel</button>
           <button id="evalConfirmYes" class="role-button primary" style="min-width:100px">Yes</button>
@@ -140,7 +144,7 @@
       function getParam(name){ const u = new URL(window.location.href); return u.searchParams.get(name); }
       document.addEventListener('DOMContentLoaded', async function(){
         const id = getParam('id');
-        const view = String(getParam('view')||'attendance');
+        let view = 'attendance';
         const courseParam = String(getParam('course')||'').trim();
         const sectionParam = String(getParam('section')||'').trim();
         const pageTitle = document.getElementById('pageTitle');
@@ -176,10 +180,27 @@
           setHeader(studentName, id);
           const tabAttendance = document.getElementById('tabAttendance');
           const tabDetails = document.getElementById('tabDetails');
+          const tabEvaluation = document.getElementById('tabEvaluation');
           const evalSwitch = document.getElementById('evalSwitch');
           const slideTrack = document.getElementById('slideTrack');
           const detailsBox = document.getElementById('contentDetails');
-          function setTab(which){ const att = String(which||'attendance')==='attendance'; if (tabAttendance && tabDetails) { tabAttendance.style.color = att ? '#2563eb' : '#6b7280'; tabAttendance.style.fontWeight = att ? '700' : '600'; tabDetails.style.color = att ? '#6b7280' : '#2563eb'; tabDetails.style.fontWeight = att ? '600' : '700'; } if (slideTrack) { slideTrack.style.transform = att ? 'translateX(0)' : 'translateX(-50%)'; } }
+          function setTab(which){
+            const idx = which==='attendance' ? 0 : (which==='reports' ? 1 : 2);
+            if (tabAttendance && tabDetails && tabEvaluation) {
+              tabAttendance.style.color = idx===0 ? '#2563eb' : '#6b7280';
+              tabAttendance.style.fontWeight = idx===0 ? '700' : '600';
+              tabDetails.style.color = idx===1 ? '#2563eb' : '#6b7280';
+              tabDetails.style.fontWeight = idx===1 ? '700' : '600';
+              tabEvaluation.style.color = idx===2 ? '#2563eb' : '#6b7280';
+              tabEvaluation.style.fontWeight = idx===2 ? '700' : '600';
+            }
+            if (slideTrack) {
+              const pct = (100/3)*idx;
+              slideTrack.style.transform = 'translateX(-' + pct + '%)';
+            }
+            const pageTitle = document.getElementById('pageTitle');
+            if (pageTitle) pageTitle.textContent = (which==='reports' ? 'WEEKLY REPORTS' : (which==='evaluation' ? 'EVALUATION' : 'ATTENDANCE'));
+          }
           let studentObj = null;
           try {
             const sr = await fetch('/api/students', { headers: authHeaders() });
@@ -217,8 +238,11 @@
             for (const s of supRows) { const sid = String(s.idNumber||s.idnumber||s.id||'').trim(); if (sid) m[sid] = s.name || sid; }
             window.supMap = m;
           } catch {}
-          if (tabDetails) { tabDetails.addEventListener('click', function(e){ e.preventDefault(); setTab('reports'); renderReportsPane(); const qs=new URLSearchParams(); qs.set('id', id); qs.set('view', 'reports'); if (courseParam) qs.set('course', courseParam); if (sectionParam) qs.set('section', sectionParam); history.replaceState(null,'',`/instructor/student-detail.html?${qs.toString()}`); }); }
-          if (tabAttendance) { tabAttendance.addEventListener('click', function(e){ e.preventDefault(); setTab('attendance'); renderAttendance(); const qs=new URLSearchParams(); qs.set('id', id); qs.set('view', 'attendance'); if (courseParam) qs.set('course', courseParam); if (sectionParam) qs.set('section', sectionParam); history.replaceState(null,'',`/instructor/student-detail.html?${qs.toString()}`); }); }
+          if (tabDetails) { tabDetails.addEventListener('click', function(e){ e.preventDefault(); view = 'reports'; setTab('reports'); renderReportsPane(); const qs=new URLSearchParams(); qs.set('id', id); qs.set('view', 'reports'); if (courseParam) qs.set('course', courseParam); if (sectionParam) qs.set('section', sectionParam); history.replaceState(null,'',`/instructor/student-detail.html?${qs.toString()}`); }); }
+          if (tabAttendance) { tabAttendance.addEventListener('click', function(e){ e.preventDefault(); view = 'attendance'; setTab('attendance'); renderAttendance(); const qs=new URLSearchParams(); qs.set('id', id); qs.set('view', 'attendance'); if (courseParam) qs.set('course', courseParam); if (sectionParam) qs.set('section', sectionParam); history.replaceState(null,'',`/instructor/student-detail.html?${qs.toString()}`); }); }
+          if (tabEvaluation) { tabEvaluation.addEventListener('click', function(e){ e.preventDefault(); view = 'evaluation'; setTab('evaluation'); renderEvaluationPane(); const qs=new URLSearchParams(); qs.set('id', id); qs.set('view', 'evaluation'); if (courseParam) qs.set('course', courseParam); if (sectionParam) qs.set('section', sectionParam); history.replaceState(null,'',`/instructor/student-detail.html?${qs.toString()}`); }); }
+          (async function(){})();
+          window.addEventListener('storage', function(e){ try { if (e && e.key === 'eval:completed:'+id) { view='evaluation'; setTab('evaluation'); renderEvaluationPane(); const qs=new URLSearchParams(); qs.set('id', id); qs.set('view', 'evaluation'); if (courseParam) qs.set('course', courseParam); if (sectionParam) qs.set('section', sectionParam); history.replaceState(null,'',`/instructor/student-detail.html?${qs.toString()}`); } } catch {} });
           if (evalSwitch) {
             (async function(){
               try {
@@ -370,6 +394,53 @@
                 box2.appendChild(el);
               });
             } else { box2.innerHTML = '<div>No reports</div>'; }
+          }
+          async function renderEvaluationPane(){
+            const box3 = document.getElementById('contentEvaluation'); if (!box3) return;
+            box3.innerHTML = '';
+            let any = false;
+            try {
+              const r = await fetch('/api/evaluations/'+encodeURIComponent(id)+'/summary', { headers: authHeaders(), cache: 'no-store' });
+              const j = await r.json().catch(()=>({}));
+              const has = r.ok && j && Array.isArray(j.data?.summary) && j.data.summary.length>0;
+              let card = document.getElementById('evalSummaryCard');
+              if (!card) {
+                card = document.createElement('div'); card.id='evalSummaryCard'; card.style.padding='10px'; card.style.margin='8px 0'; card.style.borderRadius='12px'; card.style.background='#fff'; card.style.border='1px solid #e5e7eb'; card.style.boxShadow='0 4px 10px rgba(0,0,0,0.08)';
+                const title = document.createElement('div'); title.style.fontWeight='800'; title.style.fontSize='1rem'; title.textContent='Latest evaluation';
+                const grid = document.createElement('div'); grid.id='evalGrid'; grid.style.display='grid'; grid.style.gridTemplateColumns='1fr'; grid.style.gap='12px'; grid.style.marginTop='6px';
+                card.appendChild(title); card.appendChild(grid);
+                box3.appendChild(card);
+              }
+              const grid = document.getElementById('evalGrid');
+              if (grid) {
+                grid.innerHTML = '';
+                if (has) {
+                  any = true;
+                  const arr = Array.isArray(j.data?.summary) ? j.data.summary : [];
+                  const byName = new Map(arr.map(x => [String(x.name||''), x.score]));
+                  function val(n){ const v = byName.has(n) ? byName.get(n) : null; return (v!==null && v!==undefined) ? v : 'N/A'; }
+                  function panel(titleText, items){ const p=document.createElement('div'); p.style.border='1px solid #e5e7eb'; p.style.borderRadius='10px'; p.style.padding='10px'; p.style.background='#fff'; const th=document.createElement('div'); th.style.fontWeight='800'; th.style.textAlign='center'; th.style.marginBottom='6px'; th.textContent=titleText; p.appendChild(th); items.forEach(function(pair){ const row=document.createElement('div'); row.style.display='flex'; row.style.alignItems='center'; row.style.justifyContent='space-between'; row.style.fontSize='0.9rem'; const l=document.createElement('div'); l.textContent=pair[0]+':'; const v=document.createElement('div'); v.textContent=String(val(pair[0])); row.appendChild(l); row.appendChild(v); p.appendChild(row); }); return p; }
+                  const perf = panel('Performance', [['Quantity of Work'], ['Quality of Work'], ['Job Competence']]);
+                  const work = panel('Work Behavior', [['Dependability'], ['Initiative'], ['Cooperative'], ['Loyalty']]);
+                  const skills = panel('Pro Skills', [['Judgment'], ['Customer Service']]);
+                  const overall = panel('Overall', [['Attendance'], ['Overall Rating']]);
+                  grid.appendChild(perf);
+                  grid.appendChild(work);
+                  grid.appendChild(skills);
+                  grid.appendChild(overall);
+                  const comments = String(j.data?.comments||'').trim();
+                  if (comments) {
+                    const comm = document.createElement('div'); comm.style.border='1px solid #e5e7eb'; comm.style.borderRadius='10px'; comm.style.padding='10px'; comm.style.background='#fff';
+                    const ch = document.createElement('div'); ch.style.fontWeight='800'; ch.style.textAlign='center'; ch.style.marginBottom='6px'; ch.textContent='Comments/Remarks';
+                    const ct = document.createElement('div'); ct.style.fontSize='0.9rem'; ct.style.color='#111827'; ct.style.textAlign='justify'; ct.style.lineHeight='1.5'; ct.textContent=comments;
+                    comm.appendChild(ch); comm.appendChild(ct); grid.appendChild(comm);
+                  }
+                } else {
+                  const empty=document.createElement('div'); empty.textContent='No submitted evaluations yet'; empty.style.gridColumn='1 / -1'; empty.style.textAlign='center'; grid.appendChild(empty);
+                }
+              }
+            } catch {}
+            if (!any && box3.childNodes.length===0) box3.innerHTML = '<div>No submitted evaluations yet</div>';
           }
           async function renderView(){
             const [attRes, repRes] = await Promise.all([

@@ -32,7 +32,7 @@
     <div id="photoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
       <div style="background:#fff;padding:10px;border-radius:10px;max-width:90%;max-height:85vh;display:flex;flex-direction:column;align-items:center">
         <img id="photoModalImg" src="" alt="file" style="max-width:100%;max-height:75vh;border-radius:8px" />
-        <button id="photoClose" class="role-button" style="margin-top:8px;padding:6px 12px">Close</button>
+        <button id="photoClose" class="role-button outline" style="width:auto;margin-top:10px;padding:6px 14px;border-radius:999px">Close</button>
       </div>
     </div>
     <div id="reportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
@@ -118,7 +118,24 @@
           const j = await r.json();
           all = (r.ok && j.ok && Array.isArray(j.data)) ? j.data : [];
           try { sessionStorage.setItem('inst:reports:'+String(meJ.data?.course||meJ.data?.courseCode||''), JSON.stringify(all.slice(0,200))); } catch {}
-          try { const course=String(meJ.data?.course||meJ.data?.courseCode||''); const sb=window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY); if (sb && course) { sb.channel('inst-rep:'+course).on('postgres_changes', { event:'*', schema:'public', table:'reports', filter:'course=eq.'+course }, function(){ const f=applyFilters(all); render(); }).subscribe(); } } catch {}
+          try {
+            const course = String(meJ.data?.course || meJ.data?.courseCode || '');
+            const sb = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+            if (sb) {
+              let listen = { event:'*', schema:'public', table:'reports' };
+              if (course) listen = { event:'*', schema:'public', table:'reports', filter:'course=eq.'+course };
+              sb.channel('inst-rep:'+(course||'all')).on('postgres_changes', listen, async function(){
+                try {
+                  const r = await fetch('/api/instructor/reports/activity?all=1', { headers: authHeaders(), cache: 'no-store' });
+                  const j = await r.json();
+                  const rows = (r.ok && j.ok && Array.isArray(j.data)) ? j.data : all;
+                  all = rows;
+                  try { sessionStorage.setItem('inst:reports:'+String(course||''), JSON.stringify(all.slice(0,200))); } catch {}
+                  render();
+                } catch {}
+              }).subscribe();
+            }
+          } catch {}
           
         } catch { box.innerHTML = '<div>No activity yet</div>'; return; }
         function statusText(s){ if (String(s||'')==='under_review') return 'Under Review'; if (String(s||'')==='accepted') return 'Accepted'; if (String(s||'')==='rejected') return 'Rejected'; return 'Draft'; }

@@ -166,7 +166,7 @@
         function ModalEdit() {
           if (!editing) return null;
           React.useEffect(() => { function onKey(e) { if (e.key === 'Escape') setEditing(null); } window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, [editing]);
-          function submit(e) { e.preventDefault(); const f = e.currentTarget; const payload = { firstName: (f.firstName?.value || '').trim(), middleName: (f.middleName?.value || '').trim(), lastName: (f.lastName?.value || '').trim(), section: (f.section?.value || '').trim() || null, supervisorId: (f.supervisorId?.value || '').trim() || null, password: (f.password?.value || '').trim() || undefined }; if (!payload.firstName || !payload.lastName) { alert('First and Last name are required'); return; } updateStudent(editing.idNumber, payload).then(() => setEditing(null)); }
+          function submit(e) { e.preventDefault(); const f = e.currentTarget; const payload = { firstName: (f.firstName?.value || '').trim(), middleName: (f.middleName?.value || '').trim(), lastName: (f.lastName?.value || '').trim(), section: (f.section?.value || '').trim() || null, supervisorId: (f.supervisorId?.value || '').trim() || null }; if (!payload.firstName || !payload.lastName) { alert('First and Last name are required'); return; } updateStudent(editing.idNumber, payload).then(() => setEditing(null)); }
           const overlayStyle = { position: 'fixed', inset: 0, background: 'rgba(2,6,23,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 0 };
           const modalStyle = { width: 'min(92vw, 560px)', background: '#ffffff', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.25)', padding: '1rem', boxSizing: 'border-box', margin: 0 };
           const [supListEdit, setSupListEdit] = React.useState([]);
@@ -184,7 +184,7 @@
                     React.createElement('option', { key: '4A', value: '4A' }, '4A'), React.createElement('option', { key: '4B', value: '4B' }, '4B'), React.createElement('option', { key: '4C', value: '4C' }, '4C'), React.createElement('option', { key: '4D', value: '4D' }, '4D')
                   ]),
                   React.createElement(SupervisorSelect, { key: 'supervisorId', name: 'supervisorId', placeholder: 'Assign Supervisor (optional)', options: supListEdit, defaultValue: editing.supervisorId || editing.supervisorid || '' }),
-                  React.createElement('input', { key: 'password', className: 'input', name: 'password', type: 'password', placeholder: 'New Password (optional)', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }),
+                  
                   React.createElement('div', { key: 'actions', className: 'buttons', style: { display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', justifyItems: 'center', width: '100%', margin: 0 } }, [
                     React.createElement('button', { key: 'save', className: 'role-button', type: 'submit', style: { width: '94%', margin: '0 auto', textAlign: 'center' } }, 'Save Changes'),
                     React.createElement('button', { key: 'cancel', className: 'role-button', type: 'button', onClick: () => setEditing(null), style: { width: '94%', margin: '0 auto', textAlign: 'center' } }, 'Cancel')

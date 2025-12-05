@@ -39,8 +39,8 @@
         </a>
       </div>
     </nav>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       function authHeaders(json=false){ const t = localStorage.getItem('userToken') || sessionStorage.getItem('userToken'); const h = t ? { Authorization: 'Bearer ' + t } : {}; return json ? { 'Content-Type': 'application/json', ...h } : h; }
       async function ensureAuth() { const r = await fetch('/api/me', { headers: authHeaders() }); if (!r.ok) { window.location.replace('/index.html'); throw new Error('auth'); } return r.json(); }
@@ -53,10 +53,10 @@
           const j = await r.json();
           const rows = r.ok && j.ok ? (Array.isArray(j.data) ? j.data : []) : [];
           nameMapCache = new Map((rows||[]).map(s => [String(s.idNumber||s.id_number||''), String(s.name||s.idNumber||'').trim().split(/\s+/)[0]]));
-        } catch { nameMapCache = new Map(); }
+        } catch (err) { console.error('getNameMap error', err); nameMapCache = new Map(); }
         return nameMapCache;
       }
-      async function loadPending() {
+      async function loadPending(forceReload) {
         const box = document.getElementById('pendingBox');
         box.innerHTML = '';
         for (let i=0;i<4;i++){ const sk=document.createElement('div'); sk.className='skeleton skeleton-line'; box.appendChild(sk); }
@@ -64,11 +64,11 @@
           const me = await ensureAuth();
           const meId = String(me.data?.id_number || me.data?.idNumber || '');
           const nm = await getNameMap();
-          try { const c = JSON.parse(sessionStorage.getItem('sup:pending:'+meId)||'[]'); if(Array.isArray(c)&&c.length){ box.innerHTML=''; c.forEach(x=>{ const line=document.createElement('div'); const action = x.type === 'in' ? 'Timed in' : 'Timed out'; const who = nm.get(String(x.idNumber||'')) || x.idNumber; line.textContent = `${who} ${action} in ${fmtWhen(x.ts)}`; const btn=document.createElement('button'); btn.className='role-button'; btn.type='button'; btn.textContent='Confirm'; btn.style.marginLeft='8px'; btn.addEventListener('click', async function(){ await confirmLog(x.id); }); line.appendChild(btn); box.appendChild(line); }); } } catch {}
+          if (!forceReload) { try { const c = JSON.parse(sessionStorage.getItem('sup:pending:'+meId)||'[]'); if(Array.isArray(c)&&c.length){ box.innerHTML=''; c.forEach(x=>{ const line=document.createElement('div'); const action = x.type === 'in' ? 'Timed in' : 'Timed out'; const who = nm.get(String(x.idNumber||'')) || x.idNumber; line.textContent = `${who} ${action} in ${fmtWhen(x.ts)}`; const btn=document.createElement('button'); btn.className='role-button'; btn.type='button'; btn.textContent='Confirm'; btn.style.marginLeft='8px'; btn.addEventListener('click', async function(){ await confirmLog(x.id); }); line.appendChild(btn); box.appendChild(line); }); } } catch (err) { console.error('pending cache render error', err); } }
           const r = await fetch('/api/supervisor/attendance/pending', { headers: authHeaders(), cache: 'no-store' });
           const j = await r.json();
           const rows = r.ok && j.ok ? (Array.isArray(j.data) ? j.data : []) : [];
-          if (!rows.length) { box.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No pending logs</div><div style="font-size:12px;opacity:0.7">All logs are up-to-date.</div></div></div>'; return; }
+          if (!rows.length) { box.innerHTML = '<div id="pendingEmptyState" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No pending logs</div><div style="font-size:12px;opacity:0.7">All logs are up-to-date.</div></div></div>'; return; }
           box.innerHTML = '';
           rows.forEach(x => {
             const item = document.createElement('div'); item.className='recent-item';
@@ -87,10 +87,10 @@
             item.appendChild(title); item.appendChild(sub); item.appendChild(actions);
             box.appendChild(item);
           });
-          try { sessionStorage.setItem('sup:pending:'+meId, JSON.stringify(rows.slice(0,50))); } catch {}
-        } catch { box.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No pending logs</div><div style="font-size:12px;opacity:0.7">All logs are up-to-date.</div></div></div>'; }
+          try { sessionStorage.setItem('sup:pending:'+meId, JSON.stringify(rows.slice(0,50))); } catch (err) { console.error('pending cache save error', err); }
+        } catch (err) { console.error('loadPending error', err); box.innerHTML = '<div id="pendingEmptyState" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No pending logs</div><div style="font-size:12px;opacity:0.7">All logs are up-to-date.</div></div></div>'; }
       }
-      async function loadConfirmed() {
+      async function loadConfirmed(forceReload) {
         const box = document.getElementById('confirmedBox');
         box.innerHTML = '';
         for (let i=0;i<4;i++){ const sk=document.createElement('div'); sk.className='skeleton skeleton-line'; box.appendChild(sk); }
@@ -98,11 +98,11 @@
           const me = await ensureAuth();
           const meId = String(me.data?.id_number || me.data?.idNumber || '');
           const nm = await getNameMap();
-          try { const c = JSON.parse(sessionStorage.getItem('sup:confirmed:'+meId)||'[]'); if(Array.isArray(c)&&c.length){ box.innerHTML=''; c.forEach(x=>{ const line=document.createElement('div'); const action = x.type === 'in' ? 'Timed in' : 'Timed out'; const who = nm.get(String(x.idNumber||'')) || x.idNumber; const d = new Date(Number(x.ts||Date.now())); const time = d.toLocaleTimeString('en-US',{ hour:'numeric', minute:'2-digit' }); line.textContent = `${who} ${action} in ${fmtWhen(x.ts)} — Confirmed at ${time}`; box.appendChild(line); }); } } catch {}
+          if (!forceReload) { try { const c = JSON.parse(sessionStorage.getItem('sup:confirmed:'+meId)||'[]'); if(Array.isArray(c)&&c.length){ box.innerHTML=''; c.forEach(x=>{ const line=document.createElement('div'); const action = x.type === 'in' ? 'Timed in' : 'Timed out'; const who = nm.get(String(x.idNumber||'')) || x.idNumber; const d = new Date(Number(x.ts||Date.now())); const time = d.toLocaleTimeString('en-US',{ hour:'numeric', minute:'2-digit' }); line.textContent = `${who} ${action} in ${fmtWhen(x.ts)} — Confirmed at ${time}`; box.appendChild(line); }); } } catch (err) { console.error('confirmed cache render error', err); } }
           const r = await fetch('/api/supervisor/attendance/confirmed', { headers: authHeaders(), cache: 'no-store' });
           const j = await r.json();
           const rows = r.ok && j.ok ? (Array.isArray(j.data) ? j.data : []) : [];
-          if (!rows.length) { box.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No confirmed logs yet</div><div style="font-size:12px;opacity:0.7">Please check back later.</div></div></div>'; return; }
+          if (!rows.length) { box.innerHTML = '<div id="confirmedEmptyState" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No confirmed logs yet</div><div style="font-size:12px;opacity:0.7">Please check back later.</div></div></div>'; return; }
           box.innerHTML = '';
           rows.forEach(x => {
             const item = document.createElement('div'); item.className='recent-item';
@@ -114,8 +114,8 @@
             item.appendChild(title); item.appendChild(sub);
             box.appendChild(item);
           });
-          try { sessionStorage.setItem('sup:confirmed:'+meId, JSON.stringify(rows.slice(0,50))); } catch {}
-        } catch { box.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No confirmed logs yet</div><div style="font-size:12px;opacity:0.7">Please check back later.</div></div></div>'; }
+          try { sessionStorage.setItem('sup:confirmed:'+meId, JSON.stringify(rows.slice(0,50))); } catch (err) { console.error('confirmed cache save error', err); }
+        } catch (err) { console.error('loadConfirmed error', err); box.innerHTML = '<div id="confirmedEmptyState" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%"><div style="text-align:center;padding:16px;border-radius:12px;background:var(--surface-alpha);box-shadow:0 4px 10px rgba(0,0,0,0.08);width:100%"><div style="font-size:20px">📭</div><div style="font-weight:700;margin-top:4px">No confirmed logs yet</div><div style="font-size:12px;opacity:0.7">Please check back later.</div></div></div>'; }
       }
       async function confirmLog(id, btn, line) {
         if (!id) return;
@@ -134,12 +134,13 @@
             const err = (j && j.error) ? String(j.error) : `Error ${r.status}`;
             alert(err);
           }
-        } catch {
+        } catch (err) {
+          console.error('confirmLog error', err);
           if (btn) { btn.disabled = false; btn.textContent = 'Confirm'; }
           alert('Network error');
         }
       }
-      document.addEventListener('DOMContentLoaded', async function(){ try { const me = await ensureAuth(); loadPending(); loadConfirmed(); const course = String(me?.data?.course || me?.data?.courseCode || ''); const sb = window.supabase?.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY); if (sb) { let listen = { event:'*', schema:'public', table:'attendance' }; if (course) listen = { event:'*', schema:'public', table:'attendance', filter:'course=eq.'+course }; const ch = sb.channel('sup-att:'+(course||'all')); ch.on('postgres_changes', listen, function(){ loadPending(); loadConfirmed(); }); ch.on('broadcast', { event:'attendance' }, function(){ loadPending(); loadConfirmed(); }); ch.subscribe(); } try { setInterval(function(){ loadPending(); loadConfirmed(); }, 3000); } catch {} } catch {} });
+      
     </script>
     <script>
       (function(){
@@ -155,6 +156,34 @@
         nav.addEventListener('mousemove', function(e){ if (startY!==null) move(e); });
         nav.addEventListener('mouseup', end);
       })();
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', async function(){
+        try {
+          const me = await ensureAuth();
+          const course = String(me?.data?.course || me?.data?.courseCode || '');
+          console.log('Supervisor attendance init', { course });
+          if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY || typeof supabase === 'undefined') { console.warn('Supabase not available, falling back to polling'); loadPending(false); loadConfirmed(false); return; }
+          const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, { realtime: { params: { eventsPerSecond: 20 } } });
+          const chan = sb.channel('sup-rt-attendance', { config: { postgres_changes: { include_old_record: false } } });
+          const meId = String(me?.data?.id_number || me?.data?.idNumber || '');
+          function showSupNote(log){ try { const id = String(log.idnumber || log.idNumber || ''); getNameMap().then(function(nm){ if(!nm.has(id)) return; const name = nm.get(id) || id; const act = String(log.type)==='in' ? 'timed in' : 'timed out'; const time = new Date(Number(log.ts||Date.now())).toLocaleTimeString('en-US',{ hour:'numeric', minute:'2-digit' }); const div=document.createElement('div'); div.style.position='fixed'; div.style.bottom='20px'; div.style.right='20px'; div.style.background='#222'; div.style.color='#fff'; div.style.padding='12px 16px'; div.style.borderRadius='10px'; div.style.boxShadow='0 5px 12px rgba(0,0,0,0.25)'; div.style.zIndex='99999'; div.style.fontFamily='Inter, sans-serif'; div.innerHTML='👤 '+name+' ('+id+') '+act+' at <b>'+time+'</b>'; document.body.appendChild(div); setTimeout(function(){ try { div.remove(); } catch {} }, 4500); try { if (window.Notification) { if (Notification.permission==='granted') { new Notification('Attendance — '+(String(log.type)==='in'?'Time In':'Time Out'), { body: name+' ('+id+') '+act, icon:'/icons/icon-192.png' }); } else if (Notification.permission==='default') { Notification.requestPermission().then(function(p){ if (p==='granted') { new Notification('Attendance — '+(String(log.type)==='in'?'Time In':'Time Out'), { body: name+' ('+id+') '+act, icon:'/icons/icon-192.png' }); } }); } } } catch {} }); } catch {} }
+          let pendingTimer = null;
+          let confirmedTimer = null;
+          function schedulePending(force){ if (pendingTimer) clearTimeout(pendingTimer); pendingTimer = setTimeout(function(){ loadPending(!!force); }, 120); }
+          function scheduleConfirmed(force){ if (confirmedTimer) clearTimeout(confirmedTimer); confirmedTimer = setTimeout(function(){ loadConfirmed(!!force); }, 150); }
+          let subscribed = false;
+          let lastEvent = Date.now();
+          async function appendPendingRow(x){ const box = document.getElementById('pendingBox'); if(!box){ console.error('appendPendingRow: pendingBox not found'); return; } try { const empty=document.getElementById('pendingEmptyState'); if (empty && empty.parentNode===box) empty.remove(); } catch {} try { (box.querySelectorAll('.skeleton')||[]).forEach(el=>{ try{ el.remove(); }catch{} }); } catch {} let nm = new Map(); try { nm = await getNameMap(); } catch (err) { console.error('appendPendingRow getNameMap error', err); } const item = document.createElement('div'); item.className='recent-item'; item.style.padding='10px 12px'; item.style.margin='8px 0'; item.style.borderRadius='12px'; item.style.background='var(--surface-alpha)'; item.style.boxShadow='0 4px 10px rgba(0,0,0,0.08)'; const title = document.createElement('div'); title.className='recent-title'; title.textContent = x.type==='in'?'🕒 Time In':'🕒 Time Out'; const who = nm.get(String(x.idNumber||'')) || x.idNumber; const sub = document.createElement('div'); sub.className='recent-sub'; sub.style.opacity='0.8'; sub.style.fontSize='0.9rem'; sub.textContent = `${who} • ${fmtWhen(x.ts)}`; const pill=document.createElement('span'); pill.className='status-pill status-pending'; pill.textContent = 'Pending'; sub.appendChild(pill); const actions = document.createElement('div'); actions.className='recent-actions'; actions.style.display='flex'; actions.style.alignItems='center'; actions.style.justifyContent='center'; actions.style.gap='8px'; actions.style.marginTop='8px'; const btn = document.createElement('button'); btn.className = 'role-button primary'; btn.type = 'button'; btn.textContent = 'Confirm'; btn.addEventListener('click', async function(){ await confirmLog(x.id, btn, item); }); actions.appendChild(btn); item.appendChild(title); item.appendChild(sub); item.appendChild(actions); if (box.firstChild) { box.insertBefore(item, box.firstChild); } else { box.appendChild(item); } try { const k='sup:pending:'+meId; const c = JSON.parse(sessionStorage.getItem(k)||'[]'); const arr = Array.isArray(c)?c:[]; arr.unshift(x); sessionStorage.setItem(k, JSON.stringify(arr.slice(0,50))); } catch (err) { console.error('appendPendingRow cache save error', err); } }
+          async function appendConfirmedRow(x){ const box = document.getElementById('confirmedBox'); if(!box){ console.error('appendConfirmedRow: confirmedBox not found'); return; } try { const empty=document.getElementById('confirmedEmptyState'); if (empty && empty.parentNode===box) empty.remove(); } catch {} try { (box.querySelectorAll('.skeleton')||[]).forEach(el=>{ try{ el.remove(); }catch{} }); } catch {} let nm = new Map(); try { nm = await getNameMap(); } catch (err) { console.error('appendConfirmedRow getNameMap error', err); } const item = document.createElement('div'); item.className='recent-item'; item.style.padding='10px 12px'; item.style.margin='8px 0'; item.style.borderRadius='12px'; item.style.background='var(--surface-alpha)'; item.style.boxShadow='0 4px 10px rgba(0,0,0,0.08)'; const title = document.createElement('div'); title.className='recent-title'; title.textContent = x.type==='in'?'🕒 Time In':'🕒 Time Out'; const who = nm.get(String(x.idNumber||'')) || x.idNumber; const sub = document.createElement('div'); sub.className='recent-sub'; sub.style.opacity='0.8'; sub.style.fontSize='0.9rem'; sub.textContent = `${who} • ${fmtWhen(x.ts)}`; const pill=document.createElement('span'); pill.className='status-pill status-confirmed'; pill.textContent = 'Confirmed at ' + (new Date(Number(x.ts||Date.now())).toLocaleTimeString('en-US',{ hour:'numeric', minute:'2-digit' })); sub.appendChild(pill); item.appendChild(title); item.appendChild(sub); if (box.firstChild) { box.insertBefore(item, box.firstChild); } else { box.appendChild(item); } try { const k='sup:confirmed:'+meId; const c = JSON.parse(sessionStorage.getItem(k)||'[]'); const arr = Array.isArray(c)?c:[]; arr.unshift(x); sessionStorage.setItem(k, JSON.stringify(arr.slice(0,50))); } catch (err) { console.error('appendConfirmedRow cache save error', err); } }
+          chan.on('postgres_changes', { event:'INSERT', schema:'public', table:'attendance' }, async function(payload){ lastEvent = Date.now(); try { const row = payload?.new || {}; if (row) { row.idNumber = row.idnumber ?? row.idNumber; delete row.idnumber; const id = String(row.idNumber||''); const nm = await getNameMap(); if (!nm.has(id)) return; if (String(row.status||'') !== 'awaiting_supervisor') return; showSupNote(row); await appendPendingRow(row); } } catch (err) { console.error('Realtime INSERT handler error', err); } });
+          chan.on('postgres_changes', { event:'UPDATE', schema:'public', table:'attendance' }, async function(payload){ lastEvent = Date.now(); try { const row = payload?.new || {}; if (row) { row.idNumber = row.idnumber ?? row.idNumber; delete row.idnumber; const id = String(row.idNumber||''); const nm = await getNameMap(); if (!nm.has(id)) return; if (String(row.status||'') !== 'confirmed') return; await appendConfirmedRow(row); } } catch (err) { console.error('Realtime UPDATE handler error', err); } });
+          chan.subscribe((status) => { console.log('Realtime channel status', status); subscribed = (status === 'SUBSCRIBED'); });
+          // No auto-reload: rely solely on realtime events and initial loads
+          schedulePending(false);
+          scheduleConfirmed(false);
+        } catch {}
+      });
     </script>
   </body>
 </html>

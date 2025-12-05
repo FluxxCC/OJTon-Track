@@ -79,24 +79,26 @@
         async function updateSupervisor(payload){ const resp = await fetch('/api/supervisors/' + id, { method:'PUT', headers: authHeaders(true), body: JSON.stringify(payload) }); const json = await resp.json(); if (resp.ok && json.ok) { setItem({ ...item, ...payload, name: payload.name || item.name }); setEditing(null); } else if ((json && json.error) === 'Forbidden') { alert('Forbidden: coordinator auth required'); } else alert(json.error || 'Failed'); }
         async function deleteSupervisor(){ const resp = await fetch('/api/supervisors/' + id, { method:'DELETE', headers: authHeaders() }); const json = await resp.json(); if (resp.ok && json.ok) { const back = hasCourseParam ? ('/coordinator/supervisors.html?course=' + encodeURIComponent(courseParam)) : '/coordinator/supervisors.html'; window.location.replace(back); } else if ((json && json.error) === 'Forbidden') { alert('Forbidden: coordinator auth required'); } else alert(json.error || 'Failed'); }
 
-        function ModalEdit(){ if(!editing) return null; React.useEffect(()=>{ function onKey(e){ if(e.key==='Escape') setEditing(null); } window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey); },[editing]); function submit(e){ e.preventDefault(); const f = e.currentTarget; const payload = { name: (f.name?.value||'').trim(), company: (f.company?.value||'').trim()||null, location: (f.location?.value||'').trim()||null, section: (f.section?.value||'').trim()||null, password: (f.password?.value||'').trim()||undefined }; if (!payload.name) { alert('Name is required'); return; } updateSupervisor(payload); }
+        function ModalEdit(){ if(!editing) return null; React.useEffect(()=>{ function onKey(e){ if(e.key==='Escape') setEditing(null); } window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey); },[editing]); function submit(e){ e.preventDefault(); const f = e.currentTarget; const firstName = (f.firstName?.value||'').trim(); const middleName = (f.middleName?.value||'').trim(); const lastName = (f.lastName?.value||'').trim(); if (!firstName || !lastName) { alert('First and Last name are required'); return; } const fullName = [firstName, middleName, lastName].filter(Boolean).join(' '); const payload = { name: fullName, company: (f.company?.value||'').trim()||null, location: (f.location?.value||'').trim()||null, section: (f.section?.value||'').trim()||null }; updateSupervisor(payload); }
           const overlayStyle = { position:'fixed', inset:0, background:'rgba(2,6,23,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:0 };
           const modalStyle = { width:'min(92vw, 560px)', background:'#ffffff', borderRadius:12, boxShadow:'0 10px 30px rgba(0,0,0,0.25)', padding:'1rem', boxSizing:'border-box', margin:0 };
           return React.createElement('div',{ key:'overlay', style: overlayStyle, onClick: ()=>setEditing(null) },[
             React.createElement('div',{ key:'modal', style:{ ...modalStyle, textAlign:'center', position:'relative', overflow:'hidden' }, onClick:e=>e.stopPropagation() },[
               React.createElement('div',{ key:'head', style:{ display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'0.5rem' } },[ React.createElement('div',{ key:'title', style:{ fontWeight:700 } }, 'Edit Supervisor (' + id + ')') ]),
               React.createElement('div',{ key:'content', style:{ width:'100%', margin:'0 auto' } },[
-                React.createElement('form',{ key:'form', className:'form', onSubmit: submit, style:{ display:'grid', gap:'0.75rem', justifyItems:'center', textAlign:'center', marginTop:0, width:'100%' } },[
-                  React.createElement('input',{ key:'name', className:'input', name:'name', defaultValue:item && item.name || '', placeholder:'Name', required:true, style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
+                (function(){ const nm = String(item && item.name || '').trim(); const parts = nm ? nm.split(/\s+/) : []; const dFirst = parts[0]||''; const dLast = parts.length>1 ? parts[parts.length-1] : ''; const dMiddle = parts.slice(1,-1).join(' '); return React.createElement('form',{ key:'form', className:'form', onSubmit: submit, style:{ display:'grid', gap:'0.75rem', justifyItems:'center', textAlign:'center', marginTop:0, width:'100%' } },[
+                  React.createElement('input',{ key:'firstName', className:'input', name:'firstName', defaultValue:dFirst, placeholder:'First Name', required:true, style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
+                  React.createElement('input',{ key:'middleName', className:'input', name:'middleName', defaultValue:dMiddle, placeholder:'Middle Name (optional)', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
+                  React.createElement('input',{ key:'lastName', className:'input', name:'lastName', defaultValue:dLast, placeholder:'Last Name', required:true, style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
                   React.createElement('input',{ key:'company', className:'input', name:'company', defaultValue:item && item.company || '', placeholder:'Company', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
                   React.createElement('input',{ key:'location', className:'input', name:'location', defaultValue:item && item.location || '', placeholder:'Location', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
                   React.createElement('input',{ key:'section', className:'input', name:'section', defaultValue:item && item.section || '', placeholder:'Section (optional)', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
-                  React.createElement('input',{ key:'password', className:'input', name:'password', type:'password', placeholder:'New Password (optional)', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
+                  
                   React.createElement('div',{ key:'actions', className:'buttons', style:{ display:'grid', gridTemplateColumns:'1fr', gap:'0.5rem', justifyItems:'center', width:'100%', margin:0 } },[
                     React.createElement('button',{ key:'save', className:'role-button', type:'submit', style:{ width:'94%', margin:'0 auto', textAlign:'center' } },'Save Changes'),
                     React.createElement('button',{ key:'cancel', className:'role-button', type:'button', onClick: ()=>setEditing(null), style:{ width:'94%', margin:'0 auto', textAlign:'center' } },'Cancel')
                   ])
-                ])
+                ]) })()
               ])
             ])
           ]);
@@ -119,7 +121,7 @@
         const backHref = hasCourseParam ? ('/coordinator/supervisors.html?course=' + encodeURIComponent(courseParam)) : '/coordinator/supervisors.html';
         return React.createElement('main',{ className:'container' },[
           React.createElement('h1',{ key:'t', className:'title' },'OJTonTrack'),
-          React.createElement('p',{ key:'sub', className:'subtitle' }, 'Coordinator — ' + (course||'UNKNOWN') + ' — Supervisor Details'),
+          React.createElement('p',{ key:'sub', className:'subtitle', style:{ fontSize:'1rem', color:'#4b5563' } }, 'Coordinator → ' + (hasCourseParam ? (courseParam || 'UNKNOWN') : (course || 'UNKNOWN')) + ' → Supervisor Details'),
           React.createElement(Details,{ key:'details' }),
           React.createElement('div',{ key:'studentsTitle', className:'recent-label', style:{ width:'min(92vw,560px)', margin:'0.5rem auto', textAlign:'center' } }, 'Handled Students (' + (students.length||0) + ')'),
           React.createElement('div',{ key:'studentsBox', style:{ width:'min(92vw, 560px)', maxHeight:'min(42.1vh, 287px)', overflowY:'auto', overflowX:'hidden', scrollSnapType:'y mandatory', border:'1px solid var(--border-alpha)', borderRadius:12, background:'var(--surface-alpha)', padding:'0.75rem', margin:'0.5rem auto' } },[

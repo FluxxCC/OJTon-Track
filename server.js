@@ -181,6 +181,7 @@ app.get('/config.js', (req, res) => {
     const url = process.env.SUPABASE_URL || '';
     const anon = process.env.SUPABASE_ANON_KEY || '';
     res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-store');
     res.send(`window.SUPABASE_URL=${JSON.stringify(url)};window.SUPABASE_ANON_KEY=${JSON.stringify(anon)};`);
   } catch { res.status(500).send(''); }
 });
@@ -190,6 +191,7 @@ app.get(/^.*\/config\.js$/, (req, res) => {
     const url = process.env.SUPABASE_URL || '';
     const anon = process.env.SUPABASE_ANON_KEY || '';
     res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-store');
     res.send(`window.SUPABASE_URL=${JSON.stringify(url)};window.SUPABASE_ANON_KEY=${JSON.stringify(anon)};`);
   } catch { res.status(500).send(''); }
 });
@@ -1221,6 +1223,38 @@ app.post('/api/logout', async (req, res) => {
     });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'Server error' });
+  }
+});
+
+app.post('/api/change-password', requireAuth, async (req, res) => {
+  try {
+    const u = req.user;
+    const cur = String(req.body?.currentPassword || '').trim();
+    const nw = String(req.body?.newPassword || '').trim();
+    if (!cur || !nw) return res.status(400).json({ ok: false, error: 'Missing fields' });
+    if (pool && !supabase) {
+      const [rows] = await pool.execute('SELECT id, password_hash FROM users WHERE id_number=?', [u.idNumber]);
+      const row = rows[0];
+      if (!row) return res.status(404).json({ ok: false, error: 'User not found' });
+      const bcrypt = require('bcrypt');
+      const ok = await bcrypt.compare(cur, row.password_hash);
+      if (!ok) return res.status(401).json({ ok: false, error: 'Incorrect current password' });
+      const hash = await bcrypt.hash(nw, 10);
+      await pool.execute('UPDATE users SET password_hash=? WHERE id_number=?', [hash, u.idNumber]);
+      return res.json({ ok: true });
+    } else if (supabase) {
+      const { data } = await supabase.from('users').select('id,idnumber,password,auth_user_id').eq('idnumber', u.idNumber).limit(1);
+      const doc = Array.isArray(data) && data[0] ? data[0] : null;
+      if (!doc) return res.status(404).json({ ok: false, error: 'User not found' });
+      if (String(doc.password || '') !== cur) return res.status(401).json({ ok: false, error: 'Incorrect current password' });
+      await supabase.from('users').update({ password: nw }).eq('idnumber', u.idNumber);
+      try { if (supabase.auth && supabase.auth.admin && doc.auth_user_id) { await supabase.auth.admin.updateUserById(String(doc.auth_user_id), { password: nw }); } } catch {}
+      return res.json({ ok: true });
+    } else {
+      return res.status(500).json({ ok: false, error: 'Supabase not configured' });
+    }
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'Server error' });
   }
 });
 
@@ -3121,13 +3155,166 @@ app.post('/api/evaluations', requireAuth, restrictToCourse, async (req, res) => 
       if (req.scope?.courseCode && String(stu.course || '') !== String(req.scope.courseCode) && u.role !== 'super_admin') return res.status(403).json({ ok: false, error: 'Forbidden' });
       const supOk = u.role === 'super_admin' || String(stu.supervisorid || '') === String(u.idNumber || '');
       if (!supOk) return res.status(403).json({ ok: false, error: 'Forbidden' });
-      const rawStatus = (stu.evaluation_status !== undefined) ? stu.evaluation_status : stu.evaluationStatus;
-      const enabled = (typeof rawStatus === 'boolean') ? rawStatus : (String(rawStatus || '').toLowerCase() === 'enabled');
+      let enabled = false;
+      try {
+        const { data: statRow } = await supabase
+          .from('evaluation_status')
+          .select('enabled')
+          .eq('idnumber', idNumber)
+          .single();
+        enabled = !!(statRow && statRow.enabled);
+      } catch {}
+      if (!enabled) {
+        const rawStatus = (stu.evaluation_status !== undefined) ? stu.evaluation_status : stu.evaluationStatus;
+        enabled = (typeof rawStatus === 'boolean') ? rawStatus : (String(rawStatus || '').toLowerCase() === 'enabled');
+      }
       if (!enabled && u.role !== 'super_admin') return res.status(409).json({ ok: false, error: 'Evaluation disabled' });
-      const payload = { idnumber: idNumber, byid: u.idNumber, byrole: u.role, data: JSON.stringify(form), ts: Date.now(), createdat: new Date().toISOString(), course: stu.course || null };
+      const payload = { student_id: idNumber, supervisor_id: u.idNumber, scores_json: { sections: form, date: String(b.date||'').trim() }, comment: String(b.comments||'').trim(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
       const { error } = await supabase.from('evaluation_forms').insert([payload]);
       if (error) return res.status(500).json({ ok: false, error: String(error.message || error) });
+      try {
+        const statPayload = { idnumber: idNumber, enabled: false, course: String(stu.course||'').trim() || null, updated_at: new Date().toISOString() };
+        await supabase.from('evaluation_status').upsert(statPayload, { onConflict: 'idnumber' });
+      } catch {}
       return res.status(201).json({ ok: true });
+    }
+    return res.status(500).json({ ok: false, error: 'Supabase not configured' });
+  } catch (e) { return res.status(500).json({ ok: false, error: 'Server error' }); }
+});
+
+app.get('/api/evaluations/:id/summary', requireAuth, restrictToCourse, async (req, res) => {
+  const u = req.user;
+  const id = String(req.params.id || '').trim();
+  if (!id) return res.status(400).json({ ok: false, error: 'Missing id' });
+  if (u.role !== 'instructor' && u.role !== 'super_admin' && u.role !== 'coordinator' && u.role !== 'supervisor') return res.status(403).json({ ok: false, error: 'Forbidden' });
+  try {
+    if (supabase) {
+      let { data: stuRows } = await supabase.from('users').select('idnumber,course,supervisorid,supervisorId').eq('idnumber', id).limit(1);
+      let stu = Array.isArray(stuRows) && stuRows[0] ? stuRows[0] : null;
+      if (!stu) {
+        const alt = await supabase.from('users').select('idnumber,course,supervisorid,supervisorId').ilike('idnumber', id).limit(1);
+        stuRows = alt.data;
+        stu = Array.isArray(stuRows) && stuRows[0] ? stuRows[0] : null;
+      }
+      if (!stu && u.role === 'supervisor') return res.status(403).json({ ok: false, error: 'Forbidden' });
+      if (u.role === 'supervisor') {
+        const assigned = String(stu.supervisorid || stu.supervisorId || '').trim().toLowerCase();
+        const me = String(u.idNumber || '').trim().toLowerCase();
+        if (!assigned || assigned !== me) return res.status(403).json({ ok: false, error: 'Forbidden' });
+      }
+      try {
+        const stuCourse = String(stu?.course || '').trim().toLowerCase();
+        const scopeList = Array.isArray(req.scope?.courseCodes) ? req.scope.courseCodes : ((req.scope?.courseCode ? [req.scope.courseCode] : []));
+        const scopeNorm = new Set((scopeList||[]).map(s=>String(s||'').trim().toLowerCase()).filter(Boolean));
+        const allowedByCourse = !scopeNorm.size || !stuCourse || scopeNorm.has(stuCourse);
+        if (!allowedByCourse && u.role === 'supervisor') return res.status(403).json({ ok: false, error: 'Forbidden' });
+        // Instructors/coordinators are allowed to view even if course mapping is inconsistent or student missing
+      } catch {}
+      const { data: evalRows } = await supabase
+        .from('evaluation_forms')
+        .select('student_id,scores_json,comment,created_at,instructor_scores_json,instructor_comment,instructor_id,supervisor_id')
+        .eq('student_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const latest = Array.isArray(evalRows) && evalRows[0] ? evalRows[0] : null;
+      if (!latest) return res.json({ ok: true, data: { summary: [], comments: '' } });
+      // Prefer instructor evaluation if present; otherwise fallback to supervisor
+      let parsedInstr = latest.instructor_scores_json;
+      if (typeof parsedInstr === 'string') {
+        try { parsedInstr = JSON.parse(parsedInstr); } catch { parsedInstr = null; }
+      }
+      let parsedSup = latest.scores_json;
+      if (typeof parsedSup === 'string') {
+        try { parsedSup = JSON.parse(parsedSup); } catch { parsedSup = null; }
+      }
+      const sectionsInstr = Array.isArray(parsedInstr) ? parsedInstr : (Array.isArray(parsedInstr?.sections) ? parsedInstr.sections : []);
+      const sectionsSup = Array.isArray(parsedSup) ? parsedSup : (Array.isArray(parsedSup?.sections) ? parsedSup.sections : []);
+      const useInstr = sectionsInstr && sectionsInstr.length > 0;
+      const sections = useInstr ? sectionsInstr : sectionsSup;
+      const byName = new Map();
+      sections.forEach(sec => {
+        const name = String(sec?.name || '').trim();
+        const rows = Array.isArray(sec?.rows) ? sec.rows : [];
+        const nums = rows.map(r => Number(r?.grade || 0)).filter(n => Number.isFinite(n));
+        const avg = nums.length ? Math.round(nums.reduce((a,b)=>a+b,0)/nums.length) : null;
+        if (name) byName.set(name, avg);
+      });
+      const order = [
+        'Quantity of Work','Quality of Work','Job Competence','Dependability','Initiative','Cooperative','Loyalty','Judgment','Attendance','Customer Service','Overall Rating'
+      ];
+      const summary = order.map(n => ({ name: n, score: (byName.has(n) && byName.get(n) !== null) ? byName.get(n) : null }));
+      const srcParsed = useInstr ? parsedInstr : parsedSup;
+      const comments = String((useInstr ? latest.instructor_comment : latest.comment) || srcParsed?.comments || '').trim();
+      const rawSections = Array.isArray(srcParsed?.sections) ? srcParsed.sections : (Array.isArray(srcParsed) ? srcParsed : []);
+      return res.json({ ok: true, data: { summary, comments, rawSections } });
+    }
+    return res.status(500).json({ ok: false, error: 'Supabase not configured' });
+  } catch (e) { return res.status(500).json({ ok: false, error: 'Server error' }); }
+});
+
+app.get('/api/evaluations/:id/all', requireAuth, restrictToCourse, async (req, res) => {
+  const u = req.user;
+  const id = String(req.params.id || '').trim();
+  if (!id) return res.status(400).json({ ok: false, error: 'Missing id' });
+  if (u.role !== 'instructor' && u.role !== 'super_admin' && u.role !== 'coordinator' && u.role !== 'supervisor') return res.status(403).json({ ok: false, error: 'Forbidden' });
+  try {
+    if (supabase) {
+      let { data: stuRows } = await supabase.from('users').select('idnumber,course,supervisorid,supervisorId').eq('idnumber', id).limit(1);
+      let stu = Array.isArray(stuRows) && stuRows[0] ? stuRows[0] : null;
+      if (!stu) {
+        const alt = await supabase.from('users').select('idnumber,course,supervisorid,supervisorId').ilike('idnumber', id).limit(1);
+        stuRows = alt.data;
+        stu = Array.isArray(stuRows) && stuRows[0] ? stuRows[0] : null;
+      }
+      if (!stu && u.role === 'supervisor') return res.status(403).json({ ok: false, error: 'Forbidden' });
+      if (u.role === 'supervisor') {
+        const assigned = String(stu.supervisorid || stu.supervisorId || '').trim().toLowerCase();
+        const me = String(u.idNumber || '').trim().toLowerCase();
+        if (!assigned || assigned !== me) return res.status(403).json({ ok: false, error: 'Forbidden' });
+      }
+      try {
+        const stuCourse = String(stu?.course || '').trim().toLowerCase();
+        const scopeList = Array.isArray(req.scope?.courseCodes) ? req.scope.courseCodes : ((req.scope?.courseCode ? [req.scope.courseCode] : []));
+        const scopeNorm = new Set((scopeList||[]).map(s=>String(s||'').trim().toLowerCase()).filter(Boolean));
+        const allowedByCourse = !scopeNorm.size || !stuCourse || scopeNorm.has(stuCourse);
+        if (!allowedByCourse && u.role === 'supervisor') return res.status(403).json({ ok: false, error: 'Forbidden' });
+      } catch {}
+      const { data: evalRows } = await supabase
+        .from('evaluation_forms')
+        .select('student_id,scores_json,comment,created_at,instructor_scores_json,instructor_comment,instructor_id,supervisor_id')
+        .eq('student_id', id)
+        .order('created_at', { ascending: false })
+        .range(0, 999);
+      const rows = Array.isArray(evalRows) ? evalRows : [];
+      const order = ['Quantity of Work','Quality of Work','Job Competence','Dependability','Initiative','Cooperative','Loyalty','Judgment','Attendance','Customer Service','Overall Rating'];
+      const mapSummary = function(parsed) {
+        const sections = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.sections) ? parsed.sections : []);
+        const byName = new Map();
+        sections.forEach(sec => {
+          const name = String(sec?.name || '').trim();
+          const rows = Array.isArray(sec?.rows) ? sec.rows : [];
+          const nums = rows.map(r => Number(r?.grade || 0)).filter(n => Number.isFinite(n));
+          const avg = nums.length ? Math.round(nums.reduce((a,b)=>a+b,0)/nums.length) : null;
+          if (name) byName.set(name, avg);
+        });
+        return order.map(n => ({ name: n, score: (byName.has(n) && byName.get(n) !== null) ? byName.get(n) : null }));
+      };
+      const out = rows.map(r => {
+        let parsedInstr = r.instructor_scores_json;
+        if (typeof parsedInstr === 'string') { try { parsedInstr = JSON.parse(parsedInstr); } catch { parsedInstr = null; } }
+        let parsedSup = r.scores_json;
+        if (typeof parsedSup === 'string') { try { parsedSup = JSON.parse(parsedSup); } catch { parsedSup = null; } }
+        const secInstr = Array.isArray(parsedInstr) ? parsedInstr : (Array.isArray(parsedInstr?.sections) ? parsedInstr.sections : []);
+        const secSup = Array.isArray(parsedSup) ? parsedSup : (Array.isArray(parsedSup?.sections) ? parsedSup.sections : []);
+        const useInstr = secInstr && secInstr.length > 0;
+        const srcParsed = useInstr ? parsedInstr : parsedSup;
+        const rawSections = Array.isArray(srcParsed?.sections) ? srcParsed.sections : (Array.isArray(srcParsed) ? srcParsed : []);
+        const summary = mapSummary(srcParsed);
+        const comments = String((useInstr ? r.instructor_comment : r.comment) || srcParsed?.comments || '').trim();
+        const type = useInstr ? 'instructor' : 'supervisor';
+        return { createdAt: r.created_at, type, summary, comments, rawSections };
+      });
+      return res.json({ ok: true, data: out });
     }
     return res.status(500).json({ ok: false, error: 'Supabase not configured' });
   } catch (e) { return res.status(500).json({ ok: false, error: 'Server error' }); }

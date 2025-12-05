@@ -31,7 +31,7 @@
         async function updateStudent(payload){ const resp = await fetch('/api/students/' + id, { method:'PUT', headers: authHeaders(true), body: JSON.stringify(payload) }); const json = await resp.json(); if (resp.ok && json.ok) { const name = payload.firstName || payload.lastName ? [payload.firstName||'', payload.middleName||'', payload.lastName||''].filter(Boolean).join(' ') : (item.name||''); setItem({ ...item, ...payload, name }); setEditing(null); } else alert(json.error || 'Failed'); }
         async function deleteStudent(){ const resp = await fetch('/api/students/' + id, { method:'DELETE', headers: authHeaders() }); const json = await resp.json(); if (resp.ok && json.ok) { const back = hasCourseParam ? ('/coordinator/students.html?course=' + encodeURIComponent(courseParam)) : '/coordinator/students.html'; window.location.replace(back); } else alert(json.error || 'Failed'); }
 
-        function ModalEdit(){ if(!editing) return null; React.useEffect(()=>{ function onKey(e){ if(e.key==='Escape') setEditing(null); } window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey); },[editing]); function submit(e){ e.preventDefault(); const f = e.currentTarget; const payload = { firstName: (f.firstName?.value||'').trim(), middleName: (f.middleName?.value||'').trim(), lastName: (f.lastName?.value||'').trim(), section: (f.section?.value||'').trim() || null, supervisorId: (f.supervisorId?.value||'').trim() || null, password: (f.password?.value||'').trim() || undefined }; if (!payload.firstName || !payload.lastName) { alert('First and Last name are required'); return; } updateStudent(payload); }
+        function ModalEdit(){ if(!editing) return null; React.useEffect(()=>{ function onKey(e){ if(e.key==='Escape') setEditing(null); } window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey); },[editing]); function submit(e){ e.preventDefault(); const f = e.currentTarget; const payload = { firstName: (f.firstName?.value||'').trim(), middleName: (f.middleName?.value||'').trim(), lastName: (f.lastName?.value||'').trim(), section: (f.section?.value||'').trim() || null, supervisorId: (f.supervisorId?.value||'').trim() || null }; if (!payload.firstName || !payload.lastName) { alert('First and Last name are required'); return; } updateStudent(payload); }
           const overlayStyle = { position:'fixed', inset:0, background:'rgba(2,6,23,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:0 };
           const modalStyle = { width:'min(92vw, 560px)', background:'#ffffff', borderRadius:12, boxShadow:'0 10px 30px rgba(0,0,0,0.25)', padding:'1rem', boxSizing:'border-box', margin:0 };
           return React.createElement('div',{ key:'overlay', style: overlayStyle, onClick: ()=>setEditing(null) },[
@@ -47,7 +47,7 @@
                     React.createElement('option',{ key:'4A', value:'4A' },'4A'), React.createElement('option',{ key:'4B', value:'4B' },'4B'), React.createElement('option',{ key:'4C', value:'4C' },'4C'), React.createElement('option',{ key:'4D', value:'4D' },'4D')
                   ]),
                   React.createElement('input',{ key:'supervisorId', className:'input', name:'supervisorId', defaultValue:item && (item.supervisorId || item.supervisorid) || '', placeholder:'Supervisor ID (optional)', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
-                  React.createElement('input',{ key:'password', className:'input', name:'password', type:'password', placeholder:'New Password (optional)', style:{ width:'94%', margin:'0 auto', textAlign:'center' } }),
+                  
                   React.createElement('div',{ key:'actions', className:'buttons', style:{ display:'grid', gridTemplateColumns:'1fr', gap:'0.5rem', justifyItems:'center', width:'100%', margin:0 } },[
                     React.createElement('button',{ key:'save', className:'role-button', type:'submit', style:{ width:'94%', margin:'0 auto', textAlign:'center' } },'Save Changes'),
                     React.createElement('button',{ key:'cancel', className:'role-button', type:'button', onClick: ()=>setEditing(null), style:{ width:'94%', margin:'0 auto', textAlign:'center' } },'Cancel')
@@ -60,25 +60,55 @@
 
         function DeleteConfirm(){ if(!toDelete) return null; React.useEffect(()=>{ function onKey(e){ if(e.key==='Escape') setToDelete(null); } window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey); },[toDelete]); const overlayStyle = { position:'fixed', inset:0, background:'rgba(2,6,23,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:0 }; const modalStyle = { width:'min(92vw, 560px)', background:'var(--surface-alpha)', borderRadius:12, boxShadow:'0 10px 30px rgba(0,0,0,0.25)', padding:'1rem', boxSizing:'border-box', margin:0 }; function confirmDelete(){ deleteStudent().then(()=>setToDelete(null)); } function close(){ setToDelete(null); } return React.createElement('div',{ key:'overlay', style: overlayStyle, onClick: close },[ React.createElement('div',{ key:'modal', style:{ ...modalStyle, textAlign:'center', position:'relative' }, onClick:e=>e.stopPropagation() },[ React.createElement('div',{ key:'title', style:{ fontWeight:700, marginBottom:'0.5rem' } },'Are you sure you want to delete this user?'), React.createElement('div',{ key:'actions', className:'buttons', style:{ display:'grid', gridTemplateColumns:'1fr', gap:'0.5rem', justifyItems:'center', width:'100%' } },[ React.createElement('button',{ key:'yes', className:'role-button danger', type:'button', onClick: confirmDelete, style:{ width:'94%', margin:'0 auto', textAlign:'center' } },'Delete'), React.createElement('button',{ key:'no', className:'role-button', type:'button', onClick: close, style:{ width:'94%', margin:'0 auto', textAlign:'center' } },'Cancel') ]) ]) ]); }
 
-        function Details(){ if (loading) return React.createElement('div',{ className:'container', style:{ width:'min(92vw, 560px)', margin:'0.5rem auto', padding:'0.75rem', border:'1px solid var(--border-alpha)', borderRadius:12, background:'var(--surface-alpha)', textAlign:'center' } }, 'Loading…'); if (error) return React.createElement('div',{ className:'empty', style:{ width:'min(92vw,560px)', margin:'0.5rem auto' } }, error); if (!item) return React.createElement('div',{ className:'empty', style:{ width:'min(92vw,560px)', margin:'0.5rem auto' } }, 'No data'); const c0 = String(item.course||'').trim(); const s0 = String(item.section||'').trim(); const inferred = (!c0 && s0) ? String(s0).split(' ')[0] : ''; const cc = c0 || inferred || ''; const sid = String(item.supervisorId || item.supervisorid || '').trim(); const supName = String(item.supervisorName||'').trim(); const supLabel = supName || sid || '—'; return React.createElement('div',{ className:'attendance-card', style:{ width:'min(92vw,560px)', margin:'0.5rem auto' } },[
-          React.createElement('div',{ key:'name', className:'stat-label' }, (item.name||'(No name)') + ' (' + id + ')'),
-          React.createElement('div',{ key:'course', className:'stat-label' }, 'Course: ' + (cc || '—')),
-          React.createElement('div',{ key:'section', className:'stat-label' }, 'Section: ' + (item.section || '—')),
-          React.createElement('div',{ key:'supervisor', className:'stat-label' }, 'Supervisor: ' + supLabel),
+        function Details(){ if (loading) return React.createElement('div',{ className:'container', style:{ width:'min(92vw, 560px)', margin:'0.5rem auto', padding:'0.75rem', border:'1px solid var(--border-alpha)', borderRadius:12, background:'var(--surface-alpha)', textAlign:'center' } }, 'Loading…'); if (error) return React.createElement('div',{ className:'empty', style:{ width:'min(92vw,560px)', margin:'0.5rem auto' } }, error); if (!item) return React.createElement('div',{ className:'empty', style:{ width:'min(92vw,560px)', margin:'0.5rem auto' } }, 'No data'); const c0 = String(item.course||'').trim(); const s0 = String(item.section||'').trim(); const inferred = (!c0 && s0) ? String(s0).split(' ')[0] : ''; const cc = c0 || inferred || ''; const sid = String(item.supervisorId || item.supervisorid || '').trim(); const supName = String(item.supervisorName||'').trim(); const supLabel = supName || sid || '—'; const [supCompany, setSupCompany] = React.useState(''); const [supLocation, setSupLocation] = React.useState(''); React.useEffect(()=>{ let alive = true; async function load(){ try { if (!sid) { setSupCompany(''); setSupLocation(''); return; } const r = await fetch('/api/supervisors', { headers: authHeaders(), cache:'no-store' }); const j = await r.json().catch(()=>({})); const rows = r.ok && j.ok && Array.isArray(j.data) ? j.data : []; const found = rows.find(x => String(x.idNumber||x.idnumber||'') === String(sid)); const comp = String(found && (found.company||'') || '').trim(); const loc = String(found && (found.location||'') || '').trim(); if (alive) { setSupCompany(comp); setSupLocation(loc); } } catch { if (alive) { setSupCompany(''); setSupLocation(''); } } } load(); return ()=>{ alive=false; }; }, [sid]); return React.createElement('div',{ className:'attendance-card', style:{ width:'min(92vw,560px)', margin:'0.5rem auto' } },[
+          React.createElement('div',{ key:'name', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Name: '),
+            React.createElement('span',{ key:'v' }, (item.name||'(No name)'))
+          ]),
+          React.createElement('div',{ key:'idnum', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Student ID: '),
+            React.createElement('span',{ key:'v' }, id)
+          ]),
+          React.createElement('div',{ key:'course', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Course: '),
+            React.createElement('span',{ key:'v' }, (cc || '—'))
+          ]),
+          React.createElement('div',{ key:'section', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Section: '),
+            React.createElement('span',{ key:'v' }, (item.section || '—'))
+          ]),
+          React.createElement('div',{ key:'supervisor', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Supervisor: '),
+            React.createElement('span',{ key:'v' }, supLabel)
+          ]),
+          React.createElement('div',{ key:'company', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Designated Area: '),
+            React.createElement('span',{ key:'v' }, (supCompany || '—'))
+          ]),
+          React.createElement('div',{ key:'location', className:'stat-label', style:{ marginTop:'6px' } }, [
+            React.createElement('span',{ key:'l', style:{ fontWeight:700 } }, 'Location: '),
+            React.createElement('span',{ key:'v' }, (supLocation || '—'))
+          ]),
           React.createElement('div',{ key:'actions', className:'buttons', style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem', width:'100%', marginTop:'0.75rem' } },[
-            React.createElement('button',{ key:'edit', className:'role-button neutral', type:'button', onClick: ()=>setEditing(item) }, '✏️ Edit'),
-            React.createElement('button',{ key:'del', className:'role-button danger', type:'button', onClick: ()=>setToDelete(id) }, '🗑 Delete')
+            React.createElement('button',{ key:'edit', className:'role-button neutral', type:'button', onClick: ()=>setEditing(item), style:{ display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', borderColor:'#93c5fd', background:'#eef2ff' } }, [
+              React.createElement('span',{ key:'icon' }, '✏️'),
+              React.createElement('span',{ key:'text' }, 'Edit')
+            ]),
+            React.createElement('button',{ key:'del', className:'role-button danger', type:'button', onClick: ()=>setToDelete(id), style:{ display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', background:'#fee2e2', borderColor:'#fca5a5' } }, [
+              React.createElement('span',{ key:'icon' }, '🗑'),
+              React.createElement('span',{ key:'text' }, 'Delete')
+            ])
           ])
         ]); }
 
         const backHref = hasCourseParam ? ('/coordinator/students.html?course=' + encodeURIComponent(courseParam)) : '/coordinator/students.html';
         return React.createElement('main',{ className:'container' },[
           React.createElement('h1',{ key:'t', className:'title' },'OJTonTrack'),
-          React.createElement('p',{ key:'sub', className:'subtitle' }, 'Coordinator — ' + (hasCourseParam ? (courseParam || 'UNKNOWN') : (course || 'UNKNOWN')) + ' — Student Details'),
+          React.createElement('p',{ key:'sub', className:'subtitle', style:{ fontSize:'1rem', color:'#4b5563' } }, 'Coordinator → ' + (hasCourseParam ? (courseParam || 'UNKNOWN') : (course || 'UNKNOWN')) + ' → Student Details'),
           React.createElement(Details,{ key:'details' }),
           React.createElement(ModalEdit,{ key:'editModal' }),
           React.createElement(DeleteConfirm,{ key:'deleteConfirm' }),
-          React.createElement('div',{ key:'backwrap', className:'buttons', style:{ width:'min(92vw,560px)', margin:'1rem auto 0', display:'grid', gridTemplateColumns:'1fr', gap:'0.5rem', justifyItems:'stretch' } },[
+          React.createElement('div',{ key:'backwrap', className:'buttons', style:{ width:'min(92vw,560px)', margin:'0.5rem auto 0', display:'grid', gridTemplateColumns:'1fr', gap:'0.5rem', justifyItems:'stretch' } },[
             React.createElement('a',{ key:'back', className:'role-button', href: backHref, style:{ width:'100%' } },'Back')
           ])
         ]);

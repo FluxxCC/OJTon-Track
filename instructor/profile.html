@@ -19,11 +19,24 @@
             <div id="pSection" class="stat-label">Section: </div>
           </div>
           <div class="buttons" style="margin-top:12px">
+            <button id="changePwBtn" class="role-button" style="width:100%">Change Password</button>
             <button id="logoutBtn" class="role-button" style="width:100%">Logout</button>
           </div>
         </div>
       </div>
     </main>
+    <div id="pwModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
+      <div style="background:#fff;padding:12px;border-radius:12px;width:clamp(320px,80vw,560px);display:flex;flex-direction:column;gap:8px">
+        <div class="recent-label" style="margin:0;text-align:center">Change Password</div>
+        <input id="pwCurrent" class="input" type="password" placeholder="Current password" style="width:100%;border:1px solid #ccc" />
+        <input id="pwNew" class="input" type="password" placeholder="New password" style="width:100%;border:1px solid #ccc" />
+        <input id="pwConfirm" class="input" type="password" placeholder="Re-type new password" style="width:100%;border:1px solid #ccc" />
+        <div class="buttons" style="display:flex;gap:8px;justify-content:center;width:100%">
+          <button id="pwSave" class="role-button primary" style="min-width:120px;border-radius:9999px;padding:10px 16px">Save Changes</button>
+          <button id="pwCancel" class="role-button" style="min-width:120px;border-radius:9999px;padding:10px 16px">Cancel</button>
+        </div>
+      </div>
+    </div>
     <nav class="student-nav">
       <div class="student-nav-inner" style="grid-template-columns: repeat(4, 1fr)">
         <a href="/instructor/dashboard.html" aria-label="Home">
@@ -79,6 +92,34 @@
           try { sessionStorage.removeItem('selectedRole'); sessionStorage.removeItem('userAuth'); sessionStorage.removeItem('userToken'); sessionStorage.removeItem('role'); } catch {}
           try { localStorage.removeItem('selectedRole'); localStorage.removeItem('userAuth'); localStorage.removeItem('userToken'); localStorage.removeItem('role'); } catch {}
           window.location.href = '/';
+        });
+        const pwModal = document.getElementById('pwModal');
+        const changePwBtn = document.getElementById('changePwBtn');
+        const pwSave = document.getElementById('pwSave');
+        const pwCancel = document.getElementById('pwCancel');
+        const pwCurrent = document.getElementById('pwCurrent');
+        const pwNew = document.getElementById('pwNew');
+        const pwConfirm = document.getElementById('pwConfirm');
+        function openPw(){ if (pwModal) pwModal.style.display='flex'; }
+        function closePw(){ if (pwModal) pwModal.style.display='none'; }
+        if (changePwBtn) changePwBtn.addEventListener('click', openPw);
+        if (pwCancel) pwCancel.addEventListener('click', closePw);
+        if (pwModal) pwModal.addEventListener('click', function(e){ if (e.target===pwModal) closePw(); });
+        if (pwSave) pwSave.addEventListener('click', async function(){
+          const cur = String(pwCurrent.value||'').trim();
+          const nw = String(pwNew.value||'').trim();
+          const cf = String(pwConfirm.value||'').trim();
+          if (!cur || !nw || !cf) { alert('Please fill in all fields'); return; }
+          if (nw !== cf) { alert('New passwords do not match'); return; }
+          if (nw.length < 6) { alert('New password must be at least 6 characters'); return; }
+          pwSave.disabled = true;
+          try {
+            const r = await fetch('/api/change-password', { method: 'POST', headers: authHeaders(true), body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
+            const j = await r.json().catch(()=>({}));
+            if (r.ok && j && j.ok) { alert('Password changed successfully'); closePw(); pwCurrent.value=''; pwNew.value=''; pwConfirm.value=''; }
+            else { alert((j && j.error) || 'Failed to change password'); }
+          } catch { alert('Network error'); }
+          pwSave.disabled = false;
         });
       });
     </script>
